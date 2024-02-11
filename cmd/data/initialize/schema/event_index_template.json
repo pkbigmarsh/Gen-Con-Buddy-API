@@ -1,0 +1,124 @@
+{
+    "index_patterns": [
+        "event_index*"
+    ],
+    "template": {
+        "aliases": {
+            "events": {}
+        },
+        "settings": {
+            "number_of_shards": 2,
+            "number_of_replicas": 2
+        },
+        "mappings": {
+            "properties": {
+                "game_id": {
+                    "type": "keyword"
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "group": {
+                    "type": "text"
+                },
+                "title": {
+                    "type": "text"
+                },
+                "short_description": {
+                    "type": "text"
+                },
+                "long_description": {
+                    "type": "text"
+                },
+                "game_system": {
+                    "type": "text"
+                },
+                "rules_edition": {
+                    "type": "text"
+                },
+                "materials_provided": {
+                    "type": "text"
+                },
+                "gm_names": {
+                    "type": "text"
+                },
+                "website": {
+                    "type": "text"
+                },
+                "email": {
+                    "type": "text"
+                },
+                "tournament": {
+                    "type": "text"
+                },
+                "location": {
+                    "type": "text"
+                },
+                "room_name": {
+                    "type": "text"
+                },
+                "table_number": {
+                    "type": "text"
+                },
+                "prize": {
+                    "type": "text"
+                },
+                "rules_complexity": {
+                    "type": "text"
+                },
+                "min_players": {
+                    "type": "integer"
+                },
+                "max_players": {
+                    "type": "integer"
+                },
+                "round_number": {
+                    "type": "integer"
+                },
+                "total_rounds": {
+                    "type": "integer"
+                },
+                "tickets_available": {
+                    "type": "integer"
+                },
+                "duration": {
+                    "type": "double"
+                },
+                "minimum_play_time": {
+                    "type": "double"
+                },
+                "cost": {
+                    "type": "double"
+                },
+                "start_date_time": {
+                    "type": "date"
+                },
+                "end_date_time": {
+                    "type": "date"
+                },
+                "last_modified": {
+                    "type": "date"
+                },
+                "also_runs": {
+                    "type": "date"
+                },
+                "event_type": {
+                    "type": "keyword"
+                },
+                "age_required": {
+                    "type": "keyword"
+                },
+                "experience_required": {
+                    "type": "keyword"
+                },
+                "attendee_registration": {
+                    "type": "keyword"
+                },
+                "special_category": {
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+    
+}
