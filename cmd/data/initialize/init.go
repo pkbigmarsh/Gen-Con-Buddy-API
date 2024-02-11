@@ -7,10 +7,15 @@ import (
 	_ "embed"
 	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	opensearch "github.com/opensearch-project/opensearch-go/v2"
 	opensearchapi "github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+
+	"github.com/gencon_buddy_api/internal/event"
 )
 
 var (
@@ -25,7 +30,23 @@ var (
 	eventIndexFile []byte
 )
 
-func run(_ *cobra.Command, _ []string) error {
+func run(cmd *cobra.Command, _ []string) error {
+	logVerbosity := zerolog.InfoLevel
+	v, err := cmd.Flags().GetString("verbosity")
+	if err != nil {
+		return err
+	}
+	if v != "" {
+		logVerbosity, err = zerolog.ParseLevel(v)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger := zerolog.New(
+		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
+	).Level(logVerbosity).With().Timestamp().Caller().Logger()
+
 	osClient, err := opensearch.NewClient(opensearch.Config{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -50,6 +71,5 @@ func run(_ *cobra.Command, _ []string) error {
 	}
 
 	fmt.Println(response)
-
-	return nil
+	return event.LoadEventCSV(cmd.Context(), "/mnt/c/workspace/gencon_buddy_api/notes/Gen Con Event Spreadsheets/Gen Con 2021.csv", &logger)
 }

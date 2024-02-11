@@ -9,12 +9,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var gcbRootCmd = &cobra.Command{
-	Use:   "gcb",
-	Short: "GenConBuddy is the cli helper for initiating, setting up, and maintaining the GenConBuddy API Service.",
-}
+var (
+	verbosity string
+
+	gcbRootCmd = &cobra.Command{
+		Use:   "gcb",
+		Short: "GenConBuddy is the cli helper for initiating, setting up, and maintaining the GenConBuddy API Service.",
+	}
+)
 
 func init() {
+	gcbRootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "set the log verbosity")
+
 	gcbRootCmd.AddCommand(api.ServiceCmd)
 	gcbRootCmd.AddCommand(data.Cmd)
 }

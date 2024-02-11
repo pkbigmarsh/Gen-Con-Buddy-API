@@ -1,16 +1,38 @@
 package event
 
+import (
+	"fmt"
+)
+
 // AgeGroup is an enum for the limit set of Age Groups allowed for gencon events
 type AgeGroup string
 
 // All possible values for the enum AgeGroup
 const (
-	Kids     AgeGroup = "Kids only (12 and under)"
+	Kids     AgeGroup = "kids only (12 and under)"
 	Everyone AgeGroup = "Everyone (6+)"
 	Teen     AgeGroup = "Teen (13+)"
 	Mature   AgeGroup = "Mature (18+)"
 	Drinking AgeGroup = "21+"
 )
+
+// ValidateAgeGroup validates the incoming string against the defined enum list
+func ValidateAgeGroup(v string) error {
+	switch AgeGroup(v) {
+	case Kids:
+		return nil
+	case Everyone:
+		return nil
+	case Teen:
+		return nil
+	case Mature:
+		return nil
+	case Drinking:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Age Group: %s", v)
+	}
+}
 
 // AgeGroupFromSearchTerm converts the searchable string value of the AgeGroup into the enum constant
 func AgeGroupFromSearchTerm(s string) AgeGroup {
@@ -48,6 +70,17 @@ const (
 	KID Type = "KID - Kids Activities"
 	ANI Type = "ANI - Anime Activities"
 )
+
+// ValidateType validates the incoming string against the defined enum list
+func ValidateType(v string) error {
+	switch Type(v) {
+	case SEM, ZED, ENT, RPG, BGM, CGM, WKS, MHE, LRP,
+		TRD, HMN, NMN, TCG, FLM, KID, ANI:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Type: %s", v)
+	}
+}
 
 func EventTypeFromSearchTerm(s string) Type {
 	switch s {
@@ -97,6 +130,16 @@ const (
 	Expert EXP = "Expert (You play it regularly and know all the rules)"
 )
 
+// ValidateEXP validates the incoming string against the defined enum list
+func ValidateEXP(v string) error {
+	switch EXP(v) {
+	case None, Some, Expert:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for EXP: %s", v)
+	}
+}
+
 func EXPFromSearchTerm(s string) EXP {
 	switch s {
 	case "none":
@@ -119,6 +162,16 @@ const (
 	Invite Registration = "No, this event is invite-only."
 )
 
+// ValidateRegistration validates the incoming string against the defined enum list
+func ValidateRegistration(v string) error {
+	switch Registration(v) {
+	case Open, Free, VIG, Invite:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Registration: %s", v)
+	}
+}
+
 func RegistrationFromSearchTerm(s string) Registration {
 	switch s {
 	case "open":
@@ -137,10 +190,20 @@ func RegistrationFromSearchTerm(s string) Registration {
 type Category string
 
 const (
-	No       Category = "None"
+	No       Category = "none"
 	Official Category = "Gen Con presents"
 	Premier  Category = "Premier Event"
 )
+
+// ValidateCategory validates the incoming string against the defined enum list
+func ValidateCategory(v string) error {
+	switch Category(v) {
+	case No, Official, Premier:
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Category: %s", v)
+	}
+}
 
 func CategoryFromSearchTerm(s string) Category {
 	switch s {
