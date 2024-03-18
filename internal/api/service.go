@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/gencon_buddy_api/internal/event"
 	"github.com/rs/zerolog"
 )
 
@@ -14,9 +15,10 @@ type GenconBuddyAPI struct {
 	logger       *zerolog.Logger
 	eventHandler *EventHandler
 	server       *http.Server
+	eventRepo    *event.EventRepo
 }
 
-func NewGenconBuddyAPI(logger *zerolog.Logger) *GenconBuddyAPI {
+func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo) *GenconBuddyAPI {
 
 	gcb := &GenconBuddyAPI{
 		logger: logger,
@@ -25,7 +27,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger) *GenconBuddyAPI {
 	logger.Info().Msg("Initializing GenconBuddyAPI")
 
 	logger.Info().Msg("Initializing EventHandler")
-	eventHandler := NewEventHandler(logger)
+	eventHandler := NewEventHandler(logger, NewEventManager(logger, eventRepo))
 	eventHandler.Register()
 	logger.Info().Msg("Finidhsed initializing EventHandler")
 
@@ -39,11 +41,14 @@ func NewGenconBuddyAPI(logger *zerolog.Logger) *GenconBuddyAPI {
 	gcb.eventHandler = eventHandler
 	logger.Info().Msg("Finished initializing GenconBuddyAPI")
 
+	gcb.eventRepo = eventRepo
+
 	return gcb
 }
 
 // Start starts the GennconBuddyAPI asyncronously
 func (gb *GenconBuddyAPI) Start() {
+	gb.logger.Info().Msg("Starting http server")
 	go func() {
 		err := gb.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {

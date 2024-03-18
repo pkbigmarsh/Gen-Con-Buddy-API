@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gencon_buddy_api/gcbapi"
 )
 
 const (
@@ -13,42 +15,42 @@ const (
 )
 
 type Event struct {
-	GameID               string       `json:"game_id"`
+	GameID               string       `json:"gameId"`
 	Year                 int64        `json:"year"`
 	Group                string       `json:"group"`
 	Title                string       `json:"title"`
-	ShortDescription     string       `json:"short_description"`
-	LongDescription      string       `json:"long_description"`
-	EventType            Type         `json:"event_type"`
-	GameSystem           string       `json:"game_system"`
-	RulesEdition         string       `json:"rules_edition"`
-	MinPlayers           int64        `json:"min_players"`
-	MaxPlayers           int64        `json:"max_players"`
-	AgeRequired          AgeGroup     `json:"age_required"`
-	ExperienceRequired   EXP          `json:"experience_required"`
-	MaterialsProvided    string       `json:"materials_provided"`
-	StartDateTime        time.Time    `json:"start_date_time"`
+	ShortDescription     string       `json:"shortDescription"`
+	LongDescription      string       `json:"longDescription"`
+	EventType            Type         `json:"eventType"`
+	GameSystem           string       `json:"gameSystem"`
+	RulesEdition         string       `json:"rulesEdition"`
+	MinPlayers           int64        `json:"minPlayers"`
+	MaxPlayers           int64        `json:"maxPlayers"`
+	AgeRequired          AgeGroup     `json:"ageRequired"`
+	ExperienceRequired   EXP          `json:"experienceRequired"`
+	MaterialsProvided    string       `json:"materialsProvided"`
+	StartDateTime        time.Time    `json:"startDateTime"`
 	Duration             float64      `json:"duration"`
-	EndDateTime          time.Time    `json:"end_date_time"`
-	GMNames              string       `json:"gm_names"`
+	EndDateTime          time.Time    `json:"endDateTime"`
+	GMNames              string       `json:"gmNames"`
 	Website              string       `json:"website"`
 	Email                string       `json:"email"`
 	Tournament           string       `json:"tournament"`
-	RoundNumber          int64        `json:"round_number"`
-	TotalRounds          int64        `json:"total_rounds"`
-	MinimumPlayTime      float64      `json:"minimum_play_time"`
-	AttendeeRegistration Registration `json:"attendee_registration"`
+	RoundNumber          int64        `json:"roundNumber"`
+	TotalRounds          int64        `json:"totalRounds"`
+	MinimumPlayTime      float64      `json:"minimumPlayTime"`
+	AttendeeRegistration Registration `json:"attendeeRegistration"`
 	Cost                 float64      `json:"cost"`
 	Location             string       `json:"location"`
-	RoomName             string       `json:"room_name"`
-	TableNumber          string       `json:"table_number"`
-	SpecialCategory      Category     `json:"special_category"`
-	TicketsAvailableTime int64        `json:"tickets_available"`
-	LastModified         time.Time    `json:"last_modified"`
-	AlsoRuns             time.Time    `json:"also_runs"`
+	RoomName             string       `json:"roomName"`
+	TableNumber          string       `json:"tableNumber"`
+	SpecialCategory      Category     `json:"specialCategory"`
+	TicketsAvailableTime int64        `json:"ticketsAvailable"`
+	LastModified         time.Time    `json:"lastModified"`
+	AlsoRuns             time.Time    `json:"alsoRuns"`
 	Prize                string       `json:"prize"`
-	RulesComplexity      string       `json:"rules_complexity"`
-	OriginalOrder        int64        `json:"original_order"`
+	RulesComplexity      string       `json:"rulesComplexity"`
+	OriginalOrder        int64        `json:"originalOrder"`
 }
 
 func (e *Event) SetFieldFromString(field, value string) error {
@@ -150,7 +152,7 @@ func (e *Event) SetFieldFromString(field, value string) error {
 	case "original_order":
 		return e.setIntFieldFromString(field, value)
 	default:
-		return fmt.Errorf("Unsupported field %s", field)
+		return fmt.Errorf("unsupported field %s", field)
 	}
 
 	return nil
@@ -193,7 +195,7 @@ func (e *Event) setStringField(field, value string) error {
 	case "rules_complexity":
 		e.RulesComplexity = value
 	default:
-		return fmt.Errorf("Unsupported field %s", field)
+		return fmt.Errorf("unsupported field %s", field)
 	}
 
 	return nil
@@ -221,7 +223,7 @@ func (e *Event) setIntFieldFromString(field, value string) error {
 	case "original_order":
 		e.OriginalOrder = intValue
 	default:
-		return fmt.Errorf("Unsupported field %s", field)
+		return fmt.Errorf("unsupported field %s", field)
 	}
 
 	return nil
@@ -260,7 +262,7 @@ func (e *Event) setTimeFieldFromString(field, value string) error {
 	case "also_runs":
 		e.AlsoRuns = timeValue
 	default:
-		return fmt.Errorf("Unsupported field %s", field)
+		return fmt.Errorf("unsupported field %s", field)
 	}
 
 	return nil
@@ -280,8 +282,120 @@ func (e *Event) setFloatFieldFromString(field, value string) error {
 	case "cost":
 		e.Cost = floatVal
 	default:
-		return fmt.Errorf("Unsupported field %s", field)
+		return fmt.Errorf("unsupported field %s", field)
 	}
 
 	return nil
+}
+
+// Externalize converts the internal Event shape into an api [gcbapi.Event]
+func (e *Event) Externalize() gcbapi.Event {
+	return gcbapi.Event{
+		ID:                   e.GameID,
+		Type:                 "event",
+		GameID:               e.GameID,
+		Year:                 e.Year,
+		Group:                e.Group,
+		Title:                e.Title,
+		ShortDescription:     e.ShortDescription,
+		LongDescription:      e.LongDescription,
+		EventType:            string(e.EventType),
+		GameSystem:           e.GameSystem,
+		RulesEdition:         e.RulesEdition,
+		MinPlayers:           e.MinPlayers,
+		MaxPlayers:           e.MaxPlayers,
+		AgeRequired:          string(e.AgeRequired),
+		ExperienceRequired:   string(e.ExperienceRequired),
+		MaterialsProvided:    e.MaterialsProvided,
+		StartDateTime:        e.StartDateTime,
+		Duration:             e.Duration,
+		EndDateTime:          e.EndDateTime,
+		GMNames:              e.GMNames,
+		Website:              e.Website,
+		Email:                e.Email,
+		Tournament:           e.Tournament,
+		RoundNumber:          e.RoundNumber,
+		TotalRounds:          e.TotalRounds,
+		MinimumPlayTime:      e.MinimumPlayTime,
+		AttendeeRegistration: string(e.AttendeeRegistration),
+		Cost:                 e.Cost,
+		Location:             e.Location,
+		RoomName:             e.RoomName,
+		TableNumber:          e.TableNumber,
+		SpecialCategory:      string(e.SpecialCategory),
+		TicketsAvailableTime: e.TicketsAvailableTime,
+		LastModified:         e.LastModified,
+		AlsoRuns:             e.AlsoRuns,
+		Prize:                e.Prize,
+		RulesComplexity:      e.RulesComplexity,
+		OriginalOrder:        e.OriginalOrder,
+	}
+}
+
+func FromExternal(e gcbapi.Event) (*Event, error) {
+	evt := &Event{
+		GameID:               e.GameID,
+		Year:                 e.Year,
+		Group:                e.Group,
+		Title:                e.Title,
+		ShortDescription:     e.ShortDescription,
+		LongDescription:      e.LongDescription,
+		GameSystem:           e.GameSystem,
+		RulesEdition:         e.RulesEdition,
+		MinPlayers:           e.MinPlayers,
+		MaxPlayers:           e.MaxPlayers,
+		MaterialsProvided:    e.MaterialsProvided,
+		StartDateTime:        e.StartDateTime,
+		Duration:             e.Duration,
+		EndDateTime:          e.EndDateTime,
+		GMNames:              e.GMNames,
+		Website:              e.Website,
+		Email:                e.Email,
+		Tournament:           e.Tournament,
+		RoundNumber:          e.RoundNumber,
+		TotalRounds:          e.TotalRounds,
+		MinimumPlayTime:      e.MinimumPlayTime,
+		Cost:                 e.Cost,
+		Location:             e.Location,
+		RoomName:             e.RoomName,
+		TableNumber:          e.TableNumber,
+		TicketsAvailableTime: e.TicketsAvailableTime,
+		LastModified:         e.LastModified,
+		AlsoRuns:             e.AlsoRuns,
+		Prize:                e.Prize,
+		RulesComplexity:      e.RulesComplexity,
+		OriginalOrder:        e.OriginalOrder,
+	}
+
+	if err := ValidateType(e.EventType); err != nil {
+		return nil, fmt.Errorf("invalided event type for event %s: %w", e.GameID, err)
+	}
+
+	evt.EventType = Type(e.EventType)
+
+	if err := ValidateAgeGroup(e.AgeRequired); err != nil {
+		return nil, fmt.Errorf("invalided event age required for event %s: %w", e.GameID, err)
+	}
+
+	evt.AgeRequired = AgeGroup(e.AgeRequired)
+
+	if err := ValidateEXP(e.ExperienceRequired); err != nil {
+		return nil, fmt.Errorf("invalided event experience required for event %s: %w", e.GameID, err)
+	}
+
+	evt.ExperienceRequired = EXP(e.ExperienceRequired)
+
+	if err := ValidateRegistration(e.AttendeeRegistration); err != nil {
+		return nil, fmt.Errorf("invalided event registration for event %s: %w", e.GameID, err)
+	}
+
+	evt.AttendeeRegistration = Registration(e.AttendeeRegistration)
+
+	if err := ValidateCategory(e.EventType); err != nil {
+		return nil, fmt.Errorf("invalided event type for event %s: %w", e.GameID, err)
+	}
+
+	evt.SpecialCategory = Category(e.EventType)
+
+	return evt, nil
 }

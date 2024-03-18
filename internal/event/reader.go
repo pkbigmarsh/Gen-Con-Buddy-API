@@ -52,12 +52,12 @@ var (
 	}
 )
 
-func LoadEventCSV(ctx context.Context, filepath string, logger *zerolog.Logger) error {
+func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) ([]*Event, error) {
 	logger.Info().Msgf("Loading event csv %s", filepath)
 
 	eventFile, err := os.Open(filepath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		err := eventFile.Close()
@@ -69,7 +69,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger *zerolog.Logger) 
 	eventReader := csv.NewReader(eventFile)
 	headers, err := eventReader.Read()
 	if err == io.EOF {
-		return fmt.Errorf("Event CSV file empty")
+		return nil, fmt.Errorf("Event CSV file empty")
 	}
 
 	// maps csv record position -> field that they belong to
@@ -85,8 +85,8 @@ func LoadEventCSV(ctx context.Context, filepath string, logger *zerolog.Logger) 
 	}
 
 	var (
-		eventsToWrite []*Event
-		row           []string
+		events []*Event
+		row    []string
 	)
 
 	for {
@@ -108,17 +108,17 @@ func LoadEventCSV(ctx context.Context, filepath string, logger *zerolog.Logger) 
 
 		if newEvent.GameID != "" {
 			logger.Debug().Msgf("Valid Event: %v", newEvent)
-			eventsToWrite = append(eventsToWrite, newEvent)
+			events = append(events, newEvent)
 		} else {
 			logger.Warn().Msgf("Invalid event row: %v", row)
 		}
 	}
 
-	logger.Info().Msgf("Parsed %d valid events from file", len(eventsToWrite))
+	logger.Info().Msgf("Parsed %d valid events from file", len(events))
 
 	if err != io.EOF {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return events, nil
 }

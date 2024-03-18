@@ -3,19 +3,14 @@ package initialize
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	_ "embed"
+	"errors"
 	"fmt"
-	"net/http"
-	"os"
-	"time"
 
-	opensearch "github.com/opensearch-project/opensearch-go/v2"
-	opensearchapi "github.com/opensearch-project/opensearch-go/v2/opensearchapi"
-	"github.com/rs/zerolog"
-	"github.com/spf13/cobra"
-
+	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/event"
+	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -31,45 +26,75 @@ var (
 )
 
 func run(cmd *cobra.Command, _ []string) error {
-	logVerbosity := zerolog.InfoLevel
-	v, err := cmd.Flags().GetString("verbosity")
+	filepath, err := cmd.Flags().GetString("filepath")
 	if err != nil {
-		return err
-	}
-	if v != "" {
-		logVerbosity, err = zerolog.ParseLevel(v)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("failed to read csv filepath: %w", err)
 	}
 
-	logger := zerolog.New(
-		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(logVerbosity).With().Timestamp().Caller().Logger()
-
-	osClient, err := opensearch.NewClient(opensearch.Config{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-		Addresses: []string{"https://localhost:9200"},
-		Username:  "admin",
-		Password:  "admin",
-	})
-
-	if err != nil {
-		return err
+	gcb := app.GetAppFromContext(cmd.Context())
+	if gcb == nil {
+		return fmt.Errorf("failed to load gcp app context")
 	}
 
+	gcb.Logger.Info().Msg("Updating event index template")
 	x := opensearchapi.IndicesPutIndexTemplateRequest{
 		Body: bytes.NewReader(eventIndexFile),
 		Name: "event_template",
 	}
 
-	response, err := x.Do(context.Background(), osClient)
+	response, err := x.Do(context.Background(), gcb.OSClient)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(response)
-	return event.LoadEventCSV(cmd.Context(), "/mnt/c/workspace/gencon_buddy_api/notes/Gen Con Event Spreadsheets/Gen Con 2021.csv", &logger)
+	gcb.Logger.Debug().Msgf("Index Template response: %s", response.String())
+
+	clean, err := cmd.Flags().GetBool("clean")
+	if err != nil {
+		return err
+	}
+
+	if clean {
+		eventIndex, err := cmd.Flags().GetString("eventIndex")
+		if err != nil {
+			return fmt.Errorf("failed to read persistent flag eventIndex: %s", err)
+		}
+		eventIndexPattern := eventIndex + "*"
+
+		gcb.Logger.Info().Msgf("Cleaning event indicies: %s", eventIndexPattern)
+		deleteIndexRequest := opensearchapi.IndicesDeleteRequest{
+			Index: []string{eventIndexPattern},
+		}
+
+		resp, err := deleteIndexRequest.Do(cmd.Context(), gcb.OSClient)
+		if err != nil {
+			return fmt.Errorf("failed to deleted event index [%s]: %w", eventIndexPattern, err)
+		}
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				gcb.Logger.Err(err)
+			}
+		}()
+
+		if resp.IsError() {
+			gcb.Logger.Warn().Msgf("There was a problem deleting indicies for pattern [%s]. Got code [%d]", eventIndexPattern, resp.StatusCode)
+			gcb.Logger.Error().Msgf("Raw delete response: %s", resp.String())
+		} else {
+			gcb.Logger.Debug().Msgf("Debuge delete response: %s", resp.String())
+		}
+	}
+	var evts []*event.Event
+
+	evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)
+	if err != nil {
+		return err
+	}
+
+	eventErrs, err := gcb.EventRepo.WriteEvents(cmd.Context(), evts)
+	if len(eventErrs) > 0 {
+		gcb.Logger.Error().Msgf("Failed to write events %s", errors.Join(eventErrs...))
+	}
+
+	return err
 }

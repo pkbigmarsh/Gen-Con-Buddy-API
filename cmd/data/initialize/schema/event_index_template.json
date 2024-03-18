@@ -12,7 +12,7 @@
         },
         "mappings": {
             "properties": {
-                "game_id": {
+                "gameId": {
                     "type": "keyword"
                 },
                 "year": {
@@ -24,22 +24,22 @@
                 "title": {
                     "type": "text"
                 },
-                "short_description": {
+                "shortDescription": {
                     "type": "text"
                 },
-                "long_description": {
+                "longDescription": {
                     "type": "text"
                 },
-                "game_system": {
+                "gameSystem": {
                     "type": "text"
                 },
-                "rules_edition": {
+                "rulesEdition": {
                     "type": "text"
                 },
-                "materials_provided": {
+                "materialsProvided": {
                     "type": "text"
                 },
-                "gm_names": {
+                "gmNames": {
                     "type": "text"
                 },
                 "website": {
@@ -54,71 +54,70 @@
                 "location": {
                     "type": "text"
                 },
-                "room_name": {
+                "roomName": {
                     "type": "text"
                 },
-                "table_number": {
+                "tableNumber": {
                     "type": "text"
                 },
                 "prize": {
                     "type": "text"
                 },
-                "rules_complexity": {
+                "rulesComplexity": {
                     "type": "text"
                 },
-                "min_players": {
+                "minPlayers": {
                     "type": "integer"
                 },
-                "max_players": {
+                "maxPlayers": {
                     "type": "integer"
                 },
-                "round_number": {
+                "roundNumber": {
                     "type": "integer"
                 },
-                "total_rounds": {
+                "totalRounds": {
                     "type": "integer"
                 },
-                "tickets_available": {
+                "ticketsAvailable": {
                     "type": "integer"
                 },
                 "duration": {
                     "type": "double"
                 },
-                "minimum_play_time": {
+                "minimumPlayTime": {
                     "type": "double"
                 },
                 "cost": {
                     "type": "double"
                 },
-                "start_date_time": {
+                "startDateTime": {
                     "type": "date"
                 },
-                "end_date_time": {
+                "endDateTime": {
                     "type": "date"
                 },
-                "last_modified": {
+                "lastModified": {
                     "type": "date"
                 },
-                "also_runs": {
+                "alsoRuns": {
                     "type": "date"
                 },
-                "event_type": {
+                "eventType": {
                     "type": "keyword"
                 },
-                "age_required": {
+                "ageRequired": {
                     "type": "keyword"
                 },
-                "experience_required": {
+                "experienceRequired": {
                     "type": "keyword"
                 },
-                "attendee_registration": {
+                "attendeeRegistration": {
                     "type": "keyword"
                 },
-                "special_category": {
+                "specialCategory": {
                     "type": "keyword"
                 }
             }
         }
     }
-    
 }

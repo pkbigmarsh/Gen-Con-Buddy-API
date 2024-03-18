@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
+	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/api"
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
@@ -16,22 +16,24 @@ var ServiceCmd = &cobra.Command{
 	Use:   "api",
 	Short: "Starts the GCB API Service",
 	Long:  "Runs the api service as a blocking command.",
-	Run:   run,
+	RunE:  run,
 }
 
-func run(_ *cobra.Command, _ []string) {
-	logger := zerolog.New(
-		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+func run(cmd *cobra.Command, _ []string) error {
+	gcb := app.GetAppFromContext(cmd.Context())
+	if gcb == nil {
+		return fmt.Errorf("failed to get GCB App from context when starting api service")
+	}
+
 	mainCtx, mainCancel := context.WithCancel(context.Background())
-	apiService := api.NewGenconBuddyAPI(&logger)
+	apiService := api.NewGenconBuddyAPI(&gcb.Logger, gcb.EventRepo)
 
 	gracefullShutdown := make(chan os.Signal, 1)
 	signal.Notify(gracefullShutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		<-gracefullShutdown
-		logger.Info().Msg("Recieved Shutdown signal...")
+		gcb.Logger.Info().Msg("Recieved Shutdown signal...")
 		apiService.Stop(mainCtx)
 		mainCancel()
 	}()
@@ -39,6 +41,8 @@ func run(_ *cobra.Command, _ []string) {
 	apiService.Start()
 
 	for range mainCtx.Done() {
-		return
+		return nil
 	}
+
+	return nil
 }
