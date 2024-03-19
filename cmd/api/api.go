@@ -13,9 +13,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	apiPort int
+const (
+	flagPort = "port"
+)
 
+var (
 	ServiceCmd = &cobra.Command{
 		Use:   "api",
 		Short: "Starts the GCB API Service",
@@ -25,8 +27,8 @@ var (
 )
 
 func init() {
-	ServiceCmd.Flags().IntVarP(&apiPort, "port", "p", 8080, "The port for the api service to listen to")
-	viper.BindPFlag("port", ServiceCmd.Flags().Lookup("port"))
+	ServiceCmd.Flags().IntP(flagPort, "p", 8080, "The port for the api service to listen to")
+	viper.BindPFlag("PORT", ServiceCmd.Flags().Lookup(flagPort))
 }
 
 func run(cmd *cobra.Command, _ []string) error {
@@ -35,8 +37,10 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to get GCB App from context when starting api service")
 	}
 
+	port := viper.GetInt(flagPort)
+
 	mainCtx, mainCancel := context.WithCancel(context.Background())
-	apiService := api.NewGenconBuddyAPI(&gcb.Logger, gcb.EventRepo, apiPort)
+	apiService := api.NewGenconBuddyAPI(&gcb.Logger, gcb.EventRepo, port)
 
 	gracefullShutdown := make(chan os.Signal, 1)
 	signal.Notify(gracefullShutdown, syscall.SIGINT, syscall.SIGTERM)

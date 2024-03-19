@@ -33,6 +33,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	logger.Info().Msg("Finidhsed initializing EventHandler")
 
 	logger.Info().Msg("Initializing HTTP Server")
+	logger.Debug().Msgf("Listening to port %d", port)
 	gcb.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: restful.DefaultContainer,

@@ -61,8 +61,6 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 		}
 	)
 
-	resp.WriteHeader(http.StatusOK)
-
 	defer func() {
 		responseBody, err := json.Marshal(response)
 		if err != nil {
@@ -154,4 +152,6 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 			Detail: "failed executing search request",
 		}
 	}
+
+	resp.WriteHeader(http.StatusOK)
 }
