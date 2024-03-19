@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"net/http"
 
@@ -18,7 +19,7 @@ type GenconBuddyAPI struct {
 	eventRepo    *event.EventRepo
 }
 
-func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo) *GenconBuddyAPI {
+func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port int) *GenconBuddyAPI {
 
 	gcb := &GenconBuddyAPI{
 		logger: logger,
@@ -33,7 +34,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo) *Genc
 
 	logger.Info().Msg("Initializing HTTP Server")
 	gcb.server = &http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: restful.DefaultContainer,
 	}
 	logger.Info().Msg("Finished initializing HTTP Server")
