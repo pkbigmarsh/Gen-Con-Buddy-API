@@ -10,6 +10,7 @@ import (
 	"github.com/gencon_buddy_api/cmd/data"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -46,12 +47,24 @@ var (
 )
 
 func init() {
+	viper.AutomaticEnv()
 	gcbRootCmd.PersistentFlags().StringVarP(&verbosity, "verbosity", "v", "info", "set the log verbosity.")
+	viper.BindPFlag("verbosity", gcbRootCmd.PersistentFlags().Lookup("verbosity"))
+
 	gcbRootCmd.PersistentFlags().StringVar(&config.OSAddress, "osAddress", "", "the address to connect to with opensearch.")
+	viper.BindPFlag("os_address", gcbRootCmd.PersistentFlags().Lookup("osAddress"))
+
 	gcbRootCmd.PersistentFlags().StringVar(&config.OSUsername, "osUsername", "admin", "the username to connect to the cluster with. Defaults to admin.")
+	viper.BindPFlag("os_username", gcbRootCmd.PersistentFlags().Lookup("osUsername"))
+
 	gcbRootCmd.PersistentFlags().StringVar(&config.OSPassword, "osPassword", "", "the password for the user connecting to opensearch.")
+	viper.BindPFlag("os_password", gcbRootCmd.PersistentFlags().Lookup("osPassword"))
+
 	gcbRootCmd.PersistentFlags().StringVar(&config.EventIndex, "eventIndex", "event_index", "Root index name. This value is used as the primary event index. Defaults to 'event_index'")
+	viper.BindPFlag("event_index", gcbRootCmd.PersistentFlags().Lookup("eventIndex"))
+
 	gcbRootCmd.PersistentFlags().IntVar(&config.BatchSize, "batchSize", 100, "Size of batches/pages for interactin with opensearch.")
+	viper.BindPFlag("batch_size", gcbRootCmd.PersistentFlags().Lookup("batchSize"))
 
 	gcbRootCmd.AddCommand(api.ServiceCmd)
 	gcbRootCmd.AddCommand(data.Cmd)
