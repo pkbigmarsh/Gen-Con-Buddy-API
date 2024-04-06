@@ -1,8 +1,6 @@
 package initialize
 
 import (
-	"bytes"
-	"context"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -36,18 +34,18 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to load gcp app context")
 	}
 
-	gcb.Logger.Info().Msg("Updating event index template")
-	x := opensearchapi.IndicesPutIndexTemplateRequest{
-		Body: bytes.NewReader(eventIndexFile),
-		Name: "event_template",
-	}
+	// gcb.Logger.Info().Msg("Updating event index template")
+	// x := opensearchapi.IndicesPutIndexTemplateRequest{
+	// 	Body: bytes.NewReader(eventIndexFile),
+	// 	Name: "event_template",
+	// }
 
-	response, err := x.Do(context.Background(), gcb.OSClient)
-	if err != nil {
-		return err
-	}
+	// response, err := x.Do(context.Background(), gcb.OSClient)
+	// if err != nil {
+	// 	return err
+	// }
 
-	gcb.Logger.Debug().Msgf("Index Template response: %s", response.String())
+	// gcb.Logger.Debug().Msgf("Index Template response: %s", response.String())
 
 	clean, err := cmd.Flags().GetBool("clean")
 	if err != nil {

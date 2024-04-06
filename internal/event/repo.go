@@ -205,4 +205,20 @@ type eventSearchResponse struct {
 			Event *Event  `json:"_source,omitempty"`
 		} `json:"hits"`
 	} `json:"hits"`
+	Errors bool `json:"errors"`
+	Items  []struct {
+		IndexError *struct {
+			Index  string   `json:"_index"`
+			ID     string   `json:"_id"`
+			Status int      `json:"status"`
+			Error  *osError `json:"error"`
+		} `json:"index,omitempty"`
+	} `json:"items,omitempty"`
+}
+
+type osError struct {
+	Type      string `json:"type"`
+	Reason    string `json:"reason"`
+	Index     string `json:"index"`
+	IndexUUID string `json:"index_uuid"`
 }

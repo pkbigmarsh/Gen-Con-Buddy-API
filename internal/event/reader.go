@@ -94,7 +94,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 		if err != nil {
 			break
 		}
-		logger.Debug().Msgf("Processing event csv row: %v", row)
+		// logger.Debug().Msgf("Processing event csv row: %v", row)
 		newEvent := &Event{}
 		for index, value := range row {
 			if field, ok := indexToFieldMap[index]; !ok {
@@ -107,7 +107,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 		}
 
 		if newEvent.GameID != "" {
-			logger.Debug().Msgf("Valid Event: %v", newEvent)
+			// logger.Debug().Msgf("Valid Event: %v", newEvent)
 			events = append(events, newEvent)
 		} else {
 			logger.Warn().Msgf("Invalid event row: %v", row)
