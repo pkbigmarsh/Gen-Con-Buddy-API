@@ -31,7 +31,7 @@ func NewEventHandler(logger *zerolog.Logger, manager EventManager) *EventHandler
 
 // Register registers all event endpoints with the restful service.
 func (e *EventHandler) Register() {
-	e.ws.Path("/events")
+	e.ws.Path("/api/events")
 	e.ws.Consumes(restful.MIME_JSON)
 	e.ws.Produces("application/vnd.api+json")
 
