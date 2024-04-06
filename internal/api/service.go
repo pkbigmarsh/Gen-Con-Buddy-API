@@ -9,6 +9,7 @@ import (
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gencon_buddy_api/internal/event"
+	"github.com/rs/cors"
 	"github.com/rs/zerolog"
 )
 
@@ -36,7 +37,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	logger.Debug().Msgf("Listening to port %d", port)
 	gcb.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: restful.DefaultContainer,
+		Handler: cors.AllowAll().Handler(restful.DefaultContainer),
 	}
 	logger.Info().Msg("Finished initializing HTTP Server")
 
@@ -51,6 +52,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 // Start starts the GennconBuddyAPI asyncronously
 func (gb *GenconBuddyAPI) Start() {
 	gb.logger.Info().Msg("Starting http server")
+
 	go func() {
 		err := gb.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
