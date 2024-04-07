@@ -145,6 +145,8 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		return SearchResponse{}, fmt.Errorf("failed to marshal search request: %w", err)
 	}
 
+	r.logger.Debug().Msgf("Performing search request: %s", bodyBytes)
+
 	osReq := opensearchapi.SearchRequest{
 		Index: []string{r.eventIndex},
 		Body:  bytes.NewReader(bodyBytes),

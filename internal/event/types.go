@@ -291,111 +291,113 @@ func (e *Event) setFloatFieldFromString(field, value string) error {
 // Externalize converts the internal Event shape into an api [gcbapi.Event]
 func (e *Event) Externalize() gcbapi.Event {
 	return gcbapi.Event{
-		ID:                   e.GameID,
-		Type:                 "event",
-		GameID:               e.GameID,
-		Year:                 e.Year,
-		Group:                e.Group,
-		Title:                e.Title,
-		ShortDescription:     e.ShortDescription,
-		LongDescription:      e.LongDescription,
-		EventType:            string(e.EventType),
-		GameSystem:           e.GameSystem,
-		RulesEdition:         e.RulesEdition,
-		MinPlayers:           e.MinPlayers,
-		MaxPlayers:           e.MaxPlayers,
-		AgeRequired:          string(e.AgeRequired),
-		ExperienceRequired:   string(e.ExperienceRequired),
-		MaterialsProvided:    e.MaterialsProvided,
-		StartDateTime:        e.StartDateTime,
-		Duration:             e.Duration,
-		EndDateTime:          e.EndDateTime,
-		GMNames:              e.GMNames,
-		Website:              e.Website,
-		Email:                e.Email,
-		Tournament:           e.Tournament,
-		RoundNumber:          e.RoundNumber,
-		TotalRounds:          e.TotalRounds,
-		MinimumPlayTime:      e.MinimumPlayTime,
-		AttendeeRegistration: string(e.AttendeeRegistration),
-		Cost:                 e.Cost,
-		Location:             e.Location,
-		RoomName:             e.RoomName,
-		TableNumber:          e.TableNumber,
-		SpecialCategory:      string(e.SpecialCategory),
-		TicketsAvailableTime: e.TicketsAvailableTime,
-		LastModified:         e.LastModified,
-		AlsoRuns:             e.AlsoRuns,
-		Prize:                e.Prize,
-		RulesComplexity:      e.RulesComplexity,
-		OriginalOrder:        e.OriginalOrder,
+		ID:   e.GameID,
+		Type: "event",
+		Attributes: gcbapi.EventAttributes{
+			GameID:               e.GameID,
+			Year:                 e.Year,
+			Group:                e.Group,
+			Title:                e.Title,
+			ShortDescription:     e.ShortDescription,
+			LongDescription:      e.LongDescription,
+			EventType:            string(e.EventType),
+			GameSystem:           e.GameSystem,
+			RulesEdition:         e.RulesEdition,
+			MinPlayers:           e.MinPlayers,
+			MaxPlayers:           e.MaxPlayers,
+			AgeRequired:          string(e.AgeRequired),
+			ExperienceRequired:   string(e.ExperienceRequired),
+			MaterialsProvided:    e.MaterialsProvided,
+			StartDateTime:        e.StartDateTime,
+			Duration:             e.Duration,
+			EndDateTime:          e.EndDateTime,
+			GMNames:              e.GMNames,
+			Website:              e.Website,
+			Email:                e.Email,
+			Tournament:           e.Tournament,
+			RoundNumber:          e.RoundNumber,
+			TotalRounds:          e.TotalRounds,
+			MinimumPlayTime:      e.MinimumPlayTime,
+			AttendeeRegistration: string(e.AttendeeRegistration),
+			Cost:                 e.Cost,
+			Location:             e.Location,
+			RoomName:             e.RoomName,
+			TableNumber:          e.TableNumber,
+			SpecialCategory:      string(e.SpecialCategory),
+			TicketsAvailableTime: e.TicketsAvailableTime,
+			LastModified:         e.LastModified,
+			AlsoRuns:             e.AlsoRuns,
+			Prize:                e.Prize,
+			RulesComplexity:      e.RulesComplexity,
+			OriginalOrder:        e.OriginalOrder,
+		},
 	}
 }
 
 func FromExternal(e gcbapi.Event) (*Event, error) {
 	evt := &Event{
-		GameID:               e.GameID,
-		Year:                 e.Year,
-		Group:                e.Group,
-		Title:                e.Title,
-		ShortDescription:     e.ShortDescription,
-		LongDescription:      e.LongDescription,
-		GameSystem:           e.GameSystem,
-		RulesEdition:         e.RulesEdition,
-		MinPlayers:           e.MinPlayers,
-		MaxPlayers:           e.MaxPlayers,
-		MaterialsProvided:    e.MaterialsProvided,
-		StartDateTime:        e.StartDateTime,
-		Duration:             e.Duration,
-		EndDateTime:          e.EndDateTime,
-		GMNames:              e.GMNames,
-		Website:              e.Website,
-		Email:                e.Email,
-		Tournament:           e.Tournament,
-		RoundNumber:          e.RoundNumber,
-		TotalRounds:          e.TotalRounds,
-		MinimumPlayTime:      e.MinimumPlayTime,
-		Cost:                 e.Cost,
-		Location:             e.Location,
-		RoomName:             e.RoomName,
-		TableNumber:          e.TableNumber,
-		TicketsAvailableTime: e.TicketsAvailableTime,
-		LastModified:         e.LastModified,
-		AlsoRuns:             e.AlsoRuns,
-		Prize:                e.Prize,
-		RulesComplexity:      e.RulesComplexity,
-		OriginalOrder:        e.OriginalOrder,
+		GameID:               e.Attributes.GameID,
+		Year:                 e.Attributes.Year,
+		Group:                e.Attributes.Group,
+		Title:                e.Attributes.Title,
+		ShortDescription:     e.Attributes.ShortDescription,
+		LongDescription:      e.Attributes.LongDescription,
+		GameSystem:           e.Attributes.GameSystem,
+		RulesEdition:         e.Attributes.RulesEdition,
+		MinPlayers:           e.Attributes.MinPlayers,
+		MaxPlayers:           e.Attributes.MaxPlayers,
+		MaterialsProvided:    e.Attributes.MaterialsProvided,
+		StartDateTime:        e.Attributes.StartDateTime,
+		Duration:             e.Attributes.Duration,
+		EndDateTime:          e.Attributes.EndDateTime,
+		GMNames:              e.Attributes.GMNames,
+		Website:              e.Attributes.Website,
+		Email:                e.Attributes.Email,
+		Tournament:           e.Attributes.Tournament,
+		RoundNumber:          e.Attributes.RoundNumber,
+		TotalRounds:          e.Attributes.TotalRounds,
+		MinimumPlayTime:      e.Attributes.MinimumPlayTime,
+		Cost:                 e.Attributes.Cost,
+		Location:             e.Attributes.Location,
+		RoomName:             e.Attributes.RoomName,
+		TableNumber:          e.Attributes.TableNumber,
+		TicketsAvailableTime: e.Attributes.TicketsAvailableTime,
+		LastModified:         e.Attributes.LastModified,
+		AlsoRuns:             e.Attributes.AlsoRuns,
+		Prize:                e.Attributes.Prize,
+		RulesComplexity:      e.Attributes.RulesComplexity,
+		OriginalOrder:        e.Attributes.OriginalOrder,
 	}
 
-	if err := ValidateType(e.EventType); err != nil {
-		return nil, fmt.Errorf("invalided event type for event %s: %w", e.GameID, err)
+	if err := ValidateType(e.Attributes.EventType); err != nil {
+		return nil, fmt.Errorf("invalided event type for event %s: %w", e.ID, err)
 	}
 
-	evt.EventType = Type(e.EventType)
+	evt.EventType = Type(e.Attributes.EventType)
 
-	if err := ValidateAgeGroup(e.AgeRequired); err != nil {
-		return nil, fmt.Errorf("invalided event age required for event %s: %w", e.GameID, err)
+	if err := ValidateAgeGroup(e.Attributes.AgeRequired); err != nil {
+		return nil, fmt.Errorf("invalided event age required for event %s: %w", e.ID, err)
 	}
 
-	evt.AgeRequired = AgeGroup(e.AgeRequired)
+	evt.AgeRequired = AgeGroup(e.Attributes.AgeRequired)
 
-	if err := ValidateEXP(e.ExperienceRequired); err != nil {
-		return nil, fmt.Errorf("invalided event experience required for event %s: %w", e.GameID, err)
+	if err := ValidateEXP(e.Attributes.ExperienceRequired); err != nil {
+		return nil, fmt.Errorf("invalided event experience required for event %s: %w", e.ID, err)
 	}
 
-	evt.ExperienceRequired = EXP(e.ExperienceRequired)
+	evt.ExperienceRequired = EXP(e.Attributes.ExperienceRequired)
 
-	if err := ValidateRegistration(e.AttendeeRegistration); err != nil {
-		return nil, fmt.Errorf("invalided event registration for event %s: %w", e.GameID, err)
+	if err := ValidateRegistration(e.Attributes.AttendeeRegistration); err != nil {
+		return nil, fmt.Errorf("invalided event registration for event %s: %w", e.ID, err)
 	}
 
-	evt.AttendeeRegistration = Registration(e.AttendeeRegistration)
+	evt.AttendeeRegistration = Registration(e.Attributes.AttendeeRegistration)
 
-	if err := ValidateCategory(e.EventType); err != nil {
-		return nil, fmt.Errorf("invalided event type for event %s: %w", e.GameID, err)
+	if err := ValidateCategory(e.Attributes.EventType); err != nil {
+		return nil, fmt.Errorf("invalided event type for event %s: %w", e.ID, err)
 	}
 
-	evt.SpecialCategory = Category(e.EventType)
+	evt.SpecialCategory = Category(e.Attributes.EventType)
 
 	return evt, nil
 }

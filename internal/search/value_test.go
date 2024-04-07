@@ -71,6 +71,14 @@ func TestNewGenericVa(t *testing.T) {
 				"10",
 			},
 		},
+		{
+			name:            "commas without range decleration leaves empty string values",
+			formattedString: "2021-09-19T10:17:00Z,",
+			wantValues: []any{
+				"2021-09-19T10:17:00Z",
+				"",
+			},
+		},
 	}
 
 	for _, tt := range tests {

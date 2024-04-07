@@ -44,7 +44,6 @@ var (
 				EventIndex: viper.GetString(flagOSEventIndex),
 				BatchSize:  viper.GetInt(flagBatchSize),
 			}
-			fmt.Printf("config: %+v\n", config)
 
 			logger := zerolog.New(
 				zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},

@@ -145,7 +145,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 
 	response.Meta.Total, response.Data, err = e.manager.Search(req.Request.Context(), searchReq)
 	if err != nil {
-		e.logger.Err(err).Msgf("Failed to perform search request [%v]", searchReq)
+		e.logger.Err(err).Msgf("Failed to perform search request [%+v]", searchReq)
 		resp.WriteHeader(http.StatusInternalServerError)
 		response.Error = &gcbapi.Error{
 			Status: "internal server error",

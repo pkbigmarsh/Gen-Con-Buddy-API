@@ -64,6 +64,8 @@ func (d Date) ToQuery() (any, error) {
 			}
 
 			items = append(items, r)
+		default:
+			return nil, fmt.Errorf("unexpected type %T for value %+v", val, val)
 		}
 	}
 
@@ -79,7 +81,7 @@ func (d Date) ToQuery() (any, error) {
 func convertDate(dateStr string) (string, error) {
 	dateTime, err := time.Parse(time.RFC3339, dateStr)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	indy, err := time.LoadLocation("America/Indianapolis")

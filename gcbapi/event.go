@@ -6,8 +6,13 @@ import (
 
 // Event is an external shape for [event.Event].
 type Event struct {
-	ID                   string    `json:"id"`
-	Type                 string    `json:"type"`
+	ID         string          `json:"id"`
+	Type       string          `json:"type"`
+	Attributes EventAttributes `json:"attributes"`
+}
+
+// EventAttributes wrap the JSONAPI spec attributes for the Event
+type EventAttributes struct {
 	GameID               string    `json:"gameId"`
 	Year                 int64     `json:"year"`
 	Group                string    `json:"group"`
