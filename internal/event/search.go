@@ -35,9 +35,17 @@ func NewSearchField(f string, value string) (search.Term, error) {
 		TotalRounds, TicketsAvailable:
 		return search.NewNumber(f, value)
 	case Group, Title, ShortDescription, LongDescription, GameSystem,
-		RulesEdition, MaterialsProvided, GMNames, Website, Email, Tournament,
+		RulesEdition, MaterialsProvided, GMNames, Website, Tournament,
 		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)
+	case Email:
+		text, err := search.NewText(f, value)
+		if err != nil {
+			return nil, err
+		}
+
+		prefix, err := search.NewPrefix(f, value)
+		return search.NewBool().Should(text, prefix), err
 	// double
 	case Duration, MinimumPlayTime, Cost:
 		return search.NewNumber(f, value)

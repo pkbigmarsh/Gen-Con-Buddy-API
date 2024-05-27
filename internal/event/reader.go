@@ -98,7 +98,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 		newEvent := &Event{}
 		for index, value := range row {
 			if field, ok := indexToFieldMap[index]; !ok {
-				logger.Warn().Msgf("CSV index %d did not match any field", index)
+				logger.Debug().Msgf("CSV index %d did not match any field", index)
 			} else {
 				if err := newEvent.SetFieldFromString(field, value); err != nil {
 					logger.Err(err).Msgf("Failed to set field [%s] with value [%s], skipping", field, value)

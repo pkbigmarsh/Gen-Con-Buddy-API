@@ -53,11 +53,11 @@ func run(cmd *cobra.Command, _ []string) error {
 	}
 
 	if clean {
-		eventIndex, err := cmd.Flags().GetString("eventIndex")
+		eventIndex, err := cmd.Flags().GetString("event_index")
 		if err != nil {
-			return fmt.Errorf("failed to read persistent flag eventIndex: %s", err)
+			return fmt.Errorf("failed to read persistent flag event_index: %s", err)
 		}
-		eventIndexPattern := eventIndex + "*"
+		eventIndexPattern := eventIndex
 
 		gcb.Logger.Info().Msgf("Cleaning event indicies: %s", eventIndexPattern)
 		deleteIndexRequest := opensearchapi.IndicesDeleteRequest{
