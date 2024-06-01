@@ -26,7 +26,7 @@ func NewGenericValue(val string) (GenericValue, error) {
 		return values, nil
 	}
 
-	if rangeIndex == nil && commaIndex == -1 {
+	if commaIndex == -1 {
 		return nil, fmt.Errorf("cannot find range value or list value with value string %s", val)
 	}
 

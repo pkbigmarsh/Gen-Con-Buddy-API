@@ -69,13 +69,16 @@ const (
 	FLM Type = "FLM - Film Fest"
 	KID Type = "KID - Kids Activities"
 	ANI Type = "ANI - Anime Activities"
+	TDA Type = "TDA - True Dungeon Adventures!"
+	SPA Type = "SPA - Supplemental Activities"
+	EGM Type = "EGM - Electronic Games"
 )
 
 // ValidateType validates the incoming string against the defined enum list
 func ValidateType(v string) error {
 	switch Type(v) {
 	case SEM, ZED, ENT, RPG, BGM, CGM, WKS, MHE, LRP,
-		TRD, HMN, NMN, TCG, FLM, KID, ANI:
+		TRD, HMN, NMN, TCG, FLM, KID, ANI, TDA, SPA, EGM:
 		return nil
 	default:
 		return fmt.Errorf("invalid value for Type: %s", v)
@@ -116,6 +119,12 @@ func EventTypeFromSearchTerm(s string) Type {
 		return KID
 	case "ANI":
 		return ANI
+	case "TDA":
+		return TDA
+	case "SPA":
+		return SPA
+	case "EGM":
+		return EGM
 	default:
 		return Type("invalid")
 	}
@@ -156,16 +165,18 @@ func EXPFromSearchTerm(s string) EXP {
 type Registration string
 
 const (
-	Open   Registration = "Yes, they can register for this round without having played in any other events"
-	Free   Registration = "No, this event does not require tickets!"
-	VIG    Registration = "VIG-only!"
-	Invite Registration = "No, this event is invite-only."
+	Open     Registration = "Yes, they can register for this round without having played in any other events"
+	Free     Registration = "No, this event does not require tickets!"
+	VIG      Registration = "VIG-only!"
+	Invite   Registration = "No, this event is invite-only."
+	Generic  Registration = "No, this is a generic ticket-only event!"
+	TradeDay Registration = "Trade Day only!"
 )
 
 // ValidateRegistration validates the incoming string against the defined enum list
 func ValidateRegistration(v string) error {
 	switch Registration(v) {
-	case Open, Free, VIG, Invite:
+	case Open, Free, VIG, Invite, Generic, TradeDay:
 		return nil
 	default:
 		return fmt.Errorf("invalid value for Registration: %s", v)
@@ -182,6 +193,10 @@ func RegistrationFromSearchTerm(s string) Registration {
 		return VIG
 	case "invite":
 		return Invite
+	case "generic":
+		return Generic
+	case "tradeDay":
+		return TradeDay
 	default:
 		return Registration("invalid")
 	}

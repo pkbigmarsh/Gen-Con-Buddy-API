@@ -13,42 +13,46 @@ import (
 
 var (
 	headersToFields = map[string]string{
-		"year":                   "year",
-		"original order":         "original_order",
-		"game id":                "game_id",
-		"group":                  "group",
-		"title":                  "title",
-		"short description":      "short_description",
-		"long description":       "long_description",
-		"event type":             "event_type",
-		"game system":            "game_system",
-		"rules edition":          "rules_edition",
-		"minimum players":        "min_players",
-		"maximum players":        "max_players",
-		"age required":           "age_required",
-		"experience required":    "experience_required",
-		"materials provided":     "materials_provided",
-		"start date & time":      "start_date_time",
-		"duration":               "duration",
-		"end date & time":        "end_date_time",
-		"gm names":               "gm_names",
-		"website":                "website",
-		"email":                  "email",
-		"tournament?":            "tournament",
-		"round number":           "round_number",
-		"total rounds":           "total_rounds",
-		"minimum play time":      "minimum_play_time",
-		"attendee registration?": "attendee_registration",
-		"cost $":                 "cost",
-		"location":               "location",
-		"room name":              "room_name",
-		"table number":           "table_number",
-		"special category":       "special_category",
-		"tickets available":      "tickets_available",
-		"last modified":          "last_modified",
-		"also runs":              "also_runs",
-		"prize":                  "prize",
-		"rules complexity":       "rules_complexity",
+		"game id":                    "game_id",
+		"group":                      "group",
+		"title":                      "title",
+		"short description":          "short_description",
+		"long description":           "long_description",
+		"event type":                 "event_type",
+		"game system":                "game_system",
+		"rules edition":              "rules_edition",
+		"minimum players":            "min_players",
+		"maximum players":            "max_players",
+		"age required":               "age_required",
+		"experience required":        "experience_required",
+		"materials required":         "materials_required",
+		"materials required details": "materials_required_details",
+		"start date & time":          "start_date_time",
+		"duration":                   "duration",
+		"end date & time":            "end_date_time",
+		"gm names":                   "gm_names",
+		"website":                    "website",
+		"email":                      "email",
+		"tournament?":                "tournament",
+		"round number":               "round_number",
+		"total rounds":               "total_rounds",
+		"minimum play time":          "minimum_play_time",
+		"attendee registration?":     "attendee_registration",
+		"cost $":                     "cost",
+		"location":                   "location",
+		"room name":                  "room_name",
+		"table number":               "table_number",
+		"special category":           "special_category",
+		"tickets available":          "tickets_available",
+		"last modified":              "last_modified",
+
+		// removed in 2024
+		"year":               "year",
+		"materials provided": "materials_provided",
+		"also runs":          "also_runs",
+		"prize":              "prize",
+		"rules complexity":   "rules_complexity",
+		"original order":     "original_order",
 	}
 )
 
@@ -87,6 +91,8 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 	var (
 		events []*Event
 		row    []string
+		// counts the data validation errors rather than error each time it happens
+		dataErrors = make(map[string]int)
 	)
 
 	for {
@@ -101,7 +107,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 				logger.Debug().Msgf("CSV index %d did not match any field", index)
 			} else {
 				if err := newEvent.SetFieldFromString(field, value); err != nil {
-					logger.Err(err).Msgf("Failed to set field [%s] with value [%s], skipping", field, value)
+					dataErrors[err.Error()] = dataErrors[err.Error()] + 1
 				}
 			}
 		}
@@ -112,6 +118,10 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 		} else {
 			logger.Warn().Msgf("Invalid event row: %v", row)
 		}
+	}
+
+	for err, count := range dataErrors {
+		logger.Warn().Msgf("Found data validation %d times | %s", count, err)
 	}
 
 	logger.Info().Msgf("Parsed %d valid events from file", len(events))

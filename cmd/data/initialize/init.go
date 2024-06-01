@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"bytes"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -66,7 +67,7 @@ func run(cmd *cobra.Command, _ []string) error {
 
 		resp, err := deleteIndexRequest.Do(cmd.Context(), gcb.OSClient)
 		if err != nil {
-			return fmt.Errorf("failed to deleted event index [%s]: %w", eventIndexPattern, err)
+			return fmt.Errorf("failed to delete event index [%s]: %w", eventIndexPattern, err)
 		}
 
 		defer func() {
@@ -75,13 +76,40 @@ func run(cmd *cobra.Command, _ []string) error {
 			}
 		}()
 
-		if resp.IsError() {
+		// if the index is not found, then it counts as being deleted
+		if resp.IsError() && resp.StatusCode != 404 {
 			gcb.Logger.Warn().Msgf("There was a problem deleting indicies for pattern [%s]. Got code [%d]", eventIndexPattern, resp.StatusCode)
 			gcb.Logger.Error().Msgf("Raw delete response: %s", resp.String())
+			return fmt.Errorf("failed to delete indices %s", eventIndexPattern)
 		} else {
 			gcb.Logger.Debug().Msgf("Debuge delete response: %s", resp.String())
 		}
+
+		createIndexRequest := opensearchapi.IndicesCreateRequest{
+			Index: eventIndex,
+			Body:  bytes.NewReader(eventIndexFile),
+		}
+
+		createResp, createErr := createIndexRequest.Do(cmd.Context(), gcb.OSClient)
+		if createErr != nil {
+			return fmt.Errorf("failed to create event index %s: %w", eventIndex, createErr)
+		}
+
+		defer func() {
+			if err := createResp.Body.Close(); err != nil {
+				gcb.Logger.Err(err)
+			}
+		}()
+
+		if createResp.IsError() {
+			gcb.Logger.Warn().Msgf("There was a problem creating index [%s]. Got code [%d]", eventIndex, createResp.StatusCode)
+			gcb.Logger.Error().Msgf("Raw create response: %s", createResp.String())
+			return fmt.Errorf("failed to create index %s", eventIndex)
+		} else {
+			gcb.Logger.Debug().Msgf("Debuge create response: %s", createResp.String())
+		}
 	}
+
 	var evts []*event.Event
 
 	evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)

@@ -35,17 +35,22 @@ func NewSearchField(f string, value string) (search.Term, error) {
 		TotalRounds, TicketsAvailable:
 		return search.NewNumber(f, value)
 	case Group, Title, ShortDescription, LongDescription, GameSystem,
-		RulesEdition, MaterialsProvided, GMNames, Website, Tournament,
+		RulesEdition, MaterialsProvided, GMNames, Tournament,
 		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)
-	case Email:
+	case Email, Website:
 		text, err := search.NewText(f, value)
 		if err != nil {
 			return nil, err
 		}
 
-		prefix, err := search.NewPrefix(f, value)
-		return search.NewBool().Should(text, prefix), err
+		// search on subfield stop, which breaks tokens on all special characters
+		stopText, err := search.NewText(fmt.Sprintf("%s.stop", f), value)
+		if err != nil {
+			return nil, err
+		}
+
+		return search.NewBool().Should(text, stopText), err
 	// double
 	case Duration, MinimumPlayTime, Cost:
 		return search.NewNumber(f, value)
@@ -91,43 +96,45 @@ func FieldFromString(s string) (Field, error) {
 
 // All the valid search fields for events
 const (
-	Filter               Field = "filter"
-	GameID               Field = "gameId"
-	Year                 Field = "year"
-	Group                Field = "group"
-	Title                Field = "title"
-	ShortDescription     Field = "shortDescription"
-	LongDescription      Field = "longDescription"
-	EventType            Field = "eventType"
-	GameSystem           Field = "gameSystem"
-	RulesEdition         Field = "rulesEdition"
-	MinPlayers           Field = "minPlayers"
-	MaxPlayers           Field = "maxPlayers"
-	AgeRequired          Field = "ageRequired"
-	ExperienceRequired   Field = "experienceRequired"
-	MaterialsProvided    Field = "materialsProvided"
-	StartDateTime        Field = "startDateTime"
-	Duration             Field = "duration"
-	EndDateTime          Field = "endDateTime"
-	GMNames              Field = "gmNames"
-	Website              Field = "website"
-	Email                Field = "email"
-	Tournament           Field = "tournament"
-	RoundNumber          Field = "roundNumber"
-	TotalRounds          Field = "totalRounds"
-	MinimumPlayTime      Field = "minimumPlayTime"
-	AttendeeRegistration Field = "attendeeRegistration"
-	Cost                 Field = "cost"
-	Location             Field = "location"
-	RoomName             Field = "roomName"
-	TableNumber          Field = "tableNumber"
-	SpecialCategory      Field = "specialCategory"
-	TicketsAvailable     Field = "ticketsAvailable"
-	LastModified         Field = "lastModified"
-	AlsoRuns             Field = "alsoRuns"
-	Prize                Field = "prize"
-	RulesComplexity      Field = "rulesComplexity"
-	OriginalOrder        Field = "originalOrder"
+	Filter                   Field = "filter"
+	GameID                   Field = "gameId"
+	Year                     Field = "year"
+	Group                    Field = "group"
+	Title                    Field = "title"
+	ShortDescription         Field = "shortDescription"
+	LongDescription          Field = "longDescription"
+	EventType                Field = "eventType"
+	GameSystem               Field = "gameSystem"
+	RulesEdition             Field = "rulesEdition"
+	MinPlayers               Field = "minPlayers"
+	MaxPlayers               Field = "maxPlayers"
+	AgeRequired              Field = "ageRequired"
+	ExperienceRequired       Field = "experienceRequired"
+	MaterialsProvided        Field = "materialsProvided"
+	MaterialsRequired        Field = "materialsRequired"
+	MaterialsRequiredDetails Field = "materialsRequiredDetails"
+	StartDateTime            Field = "startDateTime"
+	Duration                 Field = "duration"
+	EndDateTime              Field = "endDateTime"
+	GMNames                  Field = "gmNames"
+	Website                  Field = "website"
+	Email                    Field = "email"
+	Tournament               Field = "tournament"
+	RoundNumber              Field = "roundNumber"
+	TotalRounds              Field = "totalRounds"
+	MinimumPlayTime          Field = "minimumPlayTime"
+	AttendeeRegistration     Field = "attendeeRegistration"
+	Cost                     Field = "cost"
+	Location                 Field = "location"
+	RoomName                 Field = "roomName"
+	TableNumber              Field = "tableNumber"
+	SpecialCategory          Field = "specialCategory"
+	TicketsAvailable         Field = "ticketsAvailable"
+	LastModified             Field = "lastModified"
+	AlsoRuns                 Field = "alsoRuns"
+	Prize                    Field = "prize"
+	RulesComplexity          Field = "rulesComplexity"
+	OriginalOrder            Field = "originalOrder"
 )
 
 var (

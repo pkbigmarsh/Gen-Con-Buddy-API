@@ -15,42 +15,45 @@ const (
 )
 
 type Event struct {
-	GameID               string       `json:"gameId"`
-	Year                 int64        `json:"year"`
-	Group                string       `json:"group"`
-	Title                string       `json:"title"`
-	ShortDescription     string       `json:"shortDescription"`
-	LongDescription      string       `json:"longDescription"`
-	EventType            Type         `json:"eventType"`
-	GameSystem           string       `json:"gameSystem"`
-	RulesEdition         string       `json:"rulesEdition"`
-	MinPlayers           int64        `json:"minPlayers"`
-	MaxPlayers           int64        `json:"maxPlayers"`
-	AgeRequired          AgeGroup     `json:"ageRequired"`
-	ExperienceRequired   EXP          `json:"experienceRequired"`
-	MaterialsProvided    string       `json:"materialsProvided"`
-	StartDateTime        time.Time    `json:"startDateTime"`
-	Duration             float64      `json:"duration"`
-	EndDateTime          time.Time    `json:"endDateTime"`
-	GMNames              string       `json:"gmNames"`
-	Website              string       `json:"website"`
-	Email                string       `json:"email"`
-	Tournament           string       `json:"tournament"`
-	RoundNumber          int64        `json:"roundNumber"`
-	TotalRounds          int64        `json:"totalRounds"`
-	MinimumPlayTime      float64      `json:"minimumPlayTime"`
-	AttendeeRegistration Registration `json:"attendeeRegistration"`
-	Cost                 float64      `json:"cost"`
-	Location             string       `json:"location"`
-	RoomName             string       `json:"roomName"`
-	TableNumber          string       `json:"tableNumber"`
-	SpecialCategory      Category     `json:"specialCategory"`
-	TicketsAvailableTime int64        `json:"ticketsAvailable"`
-	LastModified         time.Time    `json:"lastModified"`
-	AlsoRuns             time.Time    `json:"alsoRuns"`
-	Prize                string       `json:"prize"`
-	RulesComplexity      string       `json:"rulesComplexity"`
-	OriginalOrder        int64        `json:"originalOrder"`
+	GameID                   string       `json:"gameId"`
+	Group                    string       `json:"group"`
+	Title                    string       `json:"title"`
+	ShortDescription         string       `json:"shortDescription"`
+	LongDescription          string       `json:"longDescription"`
+	EventType                Type         `json:"eventType"`
+	GameSystem               string       `json:"gameSystem"`
+	RulesEdition             string       `json:"rulesEdition"`
+	MinPlayers               int64        `json:"minPlayers"`
+	MaxPlayers               int64        `json:"maxPlayers"`
+	AgeRequired              AgeGroup     `json:"ageRequired"`
+	ExperienceRequired       EXP          `json:"experienceRequired"`
+	MaterialsRequired        string       `json:"materialsRequired"`        // added in 2024
+	MaterialsRequiredDetails string       `json:"materialsRequiredDetails"` // added in 2024
+	StartDateTime            time.Time    `json:"startDateTime"`
+	Duration                 float64      `json:"duration"`
+	EndDateTime              time.Time    `json:"endDateTime"`
+	GMNames                  string       `json:"gmNames"`
+	Website                  string       `json:"website"`
+	Email                    string       `json:"email"`
+	Tournament               string       `json:"tournament"`
+	RoundNumber              int64        `json:"roundNumber"`
+	TotalRounds              int64        `json:"totalRounds"`
+	MinimumPlayTime          float64      `json:"minimumPlayTime"`
+	AttendeeRegistration     Registration `json:"attendeeRegistration"`
+	Cost                     float64      `json:"cost"`
+	Location                 string       `json:"location"`
+	RoomName                 string       `json:"roomName"`
+	TableNumber              string       `json:"tableNumber"`
+	SpecialCategory          Category     `json:"specialCategory"`
+	TicketsAvailableTime     int64        `json:"ticketsAvailable"`
+	LastModified             time.Time    `json:"lastModified"`
+	// some fields were removed in 2024, but not removing them yet
+	Year              int64     `json:"year"`
+	AlsoRuns          time.Time `json:"alsoRuns"`
+	MaterialsProvided string    `json:"materialsProvided"`
+	Prize             string    `json:"prize"`
+	RulesComplexity   string    `json:"rulesComplexity"`
+	OriginalOrder     int64     `json:"originalOrder"`
 }
 
 func (e *Event) SetFieldFromString(field, value string) error {
@@ -98,6 +101,10 @@ func (e *Event) SetFieldFromString(field, value string) error {
 
 		e.ExperienceRequired = EXP(value)
 	case "materials_provided":
+		return e.setStringField(field, value)
+	case "materials_required":
+		return e.setStringField(field, value)
+	case "materials_required_details":
 		return e.setStringField(field, value)
 	case "start_date_time":
 		return e.setTimeFieldFromString(field, value)
@@ -176,6 +183,10 @@ func (e *Event) setStringField(field, value string) error {
 		e.RulesEdition = value
 	case "materials_provided":
 		e.MaterialsProvided = value
+	case "materials_required":
+		e.MaterialsRequired = value
+	case "materials_required_details":
+		e.MaterialsRequiredDetails = value
 	case "gm_names":
 		e.GMNames = value
 	case "website":
@@ -294,79 +305,83 @@ func (e *Event) Externalize() gcbapi.Event {
 		ID:   e.GameID,
 		Type: "event",
 		Attributes: gcbapi.EventAttributes{
-			GameID:               e.GameID,
-			Year:                 e.Year,
-			Group:                e.Group,
-			Title:                e.Title,
-			ShortDescription:     e.ShortDescription,
-			LongDescription:      e.LongDescription,
-			EventType:            string(e.EventType),
-			GameSystem:           e.GameSystem,
-			RulesEdition:         e.RulesEdition,
-			MinPlayers:           e.MinPlayers,
-			MaxPlayers:           e.MaxPlayers,
-			AgeRequired:          string(e.AgeRequired),
-			ExperienceRequired:   string(e.ExperienceRequired),
-			MaterialsProvided:    e.MaterialsProvided,
-			StartDateTime:        e.StartDateTime,
-			Duration:             e.Duration,
-			EndDateTime:          e.EndDateTime,
-			GMNames:              e.GMNames,
-			Website:              e.Website,
-			Email:                e.Email,
-			Tournament:           e.Tournament,
-			RoundNumber:          e.RoundNumber,
-			TotalRounds:          e.TotalRounds,
-			MinimumPlayTime:      e.MinimumPlayTime,
-			AttendeeRegistration: string(e.AttendeeRegistration),
-			Cost:                 e.Cost,
-			Location:             e.Location,
-			RoomName:             e.RoomName,
-			TableNumber:          e.TableNumber,
-			SpecialCategory:      string(e.SpecialCategory),
-			TicketsAvailableTime: e.TicketsAvailableTime,
-			LastModified:         e.LastModified,
-			AlsoRuns:             e.AlsoRuns,
-			Prize:                e.Prize,
-			RulesComplexity:      e.RulesComplexity,
-			OriginalOrder:        e.OriginalOrder,
+			GameID:                   e.GameID,
+			Year:                     e.Year,
+			Group:                    e.Group,
+			Title:                    e.Title,
+			ShortDescription:         e.ShortDescription,
+			LongDescription:          e.LongDescription,
+			EventType:                string(e.EventType),
+			GameSystem:               e.GameSystem,
+			RulesEdition:             e.RulesEdition,
+			MinPlayers:               e.MinPlayers,
+			MaxPlayers:               e.MaxPlayers,
+			AgeRequired:              string(e.AgeRequired),
+			ExperienceRequired:       string(e.ExperienceRequired),
+			MaterialsProvided:        e.MaterialsProvided,
+			MaterialsRequired:        e.MaterialsRequired,
+			MaterialsRequiredDetails: e.MaterialsRequiredDetails,
+			StartDateTime:            e.StartDateTime,
+			Duration:                 e.Duration,
+			EndDateTime:              e.EndDateTime,
+			GMNames:                  e.GMNames,
+			Website:                  e.Website,
+			Email:                    e.Email,
+			Tournament:               e.Tournament,
+			RoundNumber:              e.RoundNumber,
+			TotalRounds:              e.TotalRounds,
+			MinimumPlayTime:          e.MinimumPlayTime,
+			AttendeeRegistration:     string(e.AttendeeRegistration),
+			Cost:                     e.Cost,
+			Location:                 e.Location,
+			RoomName:                 e.RoomName,
+			TableNumber:              e.TableNumber,
+			SpecialCategory:          string(e.SpecialCategory),
+			TicketsAvailableTime:     e.TicketsAvailableTime,
+			LastModified:             e.LastModified,
+			AlsoRuns:                 e.AlsoRuns,
+			Prize:                    e.Prize,
+			RulesComplexity:          e.RulesComplexity,
+			OriginalOrder:            e.OriginalOrder,
 		},
 	}
 }
 
 func FromExternal(e gcbapi.Event) (*Event, error) {
 	evt := &Event{
-		GameID:               e.Attributes.GameID,
-		Year:                 e.Attributes.Year,
-		Group:                e.Attributes.Group,
-		Title:                e.Attributes.Title,
-		ShortDescription:     e.Attributes.ShortDescription,
-		LongDescription:      e.Attributes.LongDescription,
-		GameSystem:           e.Attributes.GameSystem,
-		RulesEdition:         e.Attributes.RulesEdition,
-		MinPlayers:           e.Attributes.MinPlayers,
-		MaxPlayers:           e.Attributes.MaxPlayers,
-		MaterialsProvided:    e.Attributes.MaterialsProvided,
-		StartDateTime:        e.Attributes.StartDateTime,
-		Duration:             e.Attributes.Duration,
-		EndDateTime:          e.Attributes.EndDateTime,
-		GMNames:              e.Attributes.GMNames,
-		Website:              e.Attributes.Website,
-		Email:                e.Attributes.Email,
-		Tournament:           e.Attributes.Tournament,
-		RoundNumber:          e.Attributes.RoundNumber,
-		TotalRounds:          e.Attributes.TotalRounds,
-		MinimumPlayTime:      e.Attributes.MinimumPlayTime,
-		Cost:                 e.Attributes.Cost,
-		Location:             e.Attributes.Location,
-		RoomName:             e.Attributes.RoomName,
-		TableNumber:          e.Attributes.TableNumber,
-		TicketsAvailableTime: e.Attributes.TicketsAvailableTime,
-		LastModified:         e.Attributes.LastModified,
-		AlsoRuns:             e.Attributes.AlsoRuns,
-		Prize:                e.Attributes.Prize,
-		RulesComplexity:      e.Attributes.RulesComplexity,
-		OriginalOrder:        e.Attributes.OriginalOrder,
+		GameID:                   e.Attributes.GameID,
+		Year:                     e.Attributes.Year,
+		Group:                    e.Attributes.Group,
+		Title:                    e.Attributes.Title,
+		ShortDescription:         e.Attributes.ShortDescription,
+		LongDescription:          e.Attributes.LongDescription,
+		GameSystem:               e.Attributes.GameSystem,
+		RulesEdition:             e.Attributes.RulesEdition,
+		MinPlayers:               e.Attributes.MinPlayers,
+		MaxPlayers:               e.Attributes.MaxPlayers,
+		MaterialsProvided:        e.Attributes.MaterialsProvided,
+		MaterialsRequired:        e.Attributes.MaterialsRequired,
+		MaterialsRequiredDetails: e.Attributes.MaterialsRequiredDetails,
+		StartDateTime:            e.Attributes.StartDateTime,
+		Duration:                 e.Attributes.Duration,
+		EndDateTime:              e.Attributes.EndDateTime,
+		GMNames:                  e.Attributes.GMNames,
+		Website:                  e.Attributes.Website,
+		Email:                    e.Attributes.Email,
+		Tournament:               e.Attributes.Tournament,
+		RoundNumber:              e.Attributes.RoundNumber,
+		TotalRounds:              e.Attributes.TotalRounds,
+		MinimumPlayTime:          e.Attributes.MinimumPlayTime,
+		Cost:                     e.Attributes.Cost,
+		Location:                 e.Attributes.Location,
+		RoomName:                 e.Attributes.RoomName,
+		TableNumber:              e.Attributes.TableNumber,
+		TicketsAvailableTime:     e.Attributes.TicketsAvailableTime,
+		LastModified:             e.Attributes.LastModified,
+		AlsoRuns:                 e.Attributes.AlsoRuns,
+		Prize:                    e.Attributes.Prize,
+		RulesComplexity:          e.Attributes.RulesComplexity,
+		OriginalOrder:            e.Attributes.OriginalOrder,
 	}
 
 	if err := ValidateType(e.Attributes.EventType); err != nil {
