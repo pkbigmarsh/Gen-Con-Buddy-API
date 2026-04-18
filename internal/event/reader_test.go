@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLoadEventCSV_DecodesWindows1252(t *testing.T) {
@@ -19,18 +18,31 @@ func TestLoadEventCSV_DecodesWindows1252(t *testing.T) {
 		"TST24XX000001,Test Group,Test Game,\"It\x92s a great game\",\"The GM said \x93hello\x94 \x97 enjoy\",ZED,None,None,1,4,Everyone (6+),None,No,,08/01/2024 09:00 AM,2,08/01/2024 11:00 AM,Test GM,,,No,1,1,2,Attendee Registration Required,$0,Hall A,Room 1,1,,4,08/01/2024\n"
 
 	f, err := os.CreateTemp(t.TempDir(), "events_*.csv")
-	require.NoError(t, err)
-	_, err = f.Write([]byte(csvContent))
-	require.NoError(t, err)
-	require.NoError(t, f.Close())
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	if _, err := f.Write([]byte(csvContent)); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close temp file: %v", err)
+	}
 
 	events, err := LoadEventCSV(context.Background(), f.Name(), zerolog.Nop())
-	require.NoError(t, err)
-	require.Len(t, events, 1)
+	if err != nil {
+		t.Fatalf("LoadEventCSV returned error: %v", err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
 
-	require.Equal(t, "It\u2019s a great game", events[0].ShortDescription,
-		"Windows-1252 \\x92 should decode to UTF-8 right single quotation mark")
-	require.Equal(t, "The GM said \u201chello\u201d \u2014 enjoy", events[0].LongDescription,
-		"Windows-1252 smart quotes and em dash should decode to proper UTF-8")
+	wantShort := "It\u2019s a great game"
+	if events[0].ShortDescription != wantShort {
+		t.Errorf("ShortDescription = %q, want %q", events[0].ShortDescription, wantShort)
+	}
 
+	wantLong := "The GM said \u201chello\u201d \u2014 enjoy"
+	if events[0].LongDescription != wantLong {
+		t.Errorf("LongDescription = %q, want %q", events[0].LongDescription, wantLong)
+	}
 }
