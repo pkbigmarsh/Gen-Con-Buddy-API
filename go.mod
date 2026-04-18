@@ -1,6 +1,6 @@
 module github.com/gencon_buddy_api
 
-go 1.21.5
+go 1.25.2
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.1
