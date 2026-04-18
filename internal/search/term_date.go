@@ -112,7 +112,7 @@ func dateRangeQuery(field string, r Range) (any, error) {
 	}
 
 	if r.max != "" {
-		dateStr, err := convertDate(r.min)
+		dateStr, err := convertDate(r.max)
 		if err != nil {
 			return nil, fmt.Errorf("cannot build a date range query with an invalid date %s: %w", r.max, err)
 		}
