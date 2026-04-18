@@ -27,17 +27,30 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	}
 
 	switch field {
-	case GameID, EventType, AgeRequired, ExperienceRequired,
-		AttendeeRegistration, SpecialCategory, MaterialsRequired:
+	// keywords that are specific enum types
+	case AgeRequired:
+		return search.NewKeywordSingle(f, string(AgeGroupFromSearchTerm(value)))
+	case EventType:
+		return search.NewKeywordSingle(f, string(EventTypeFromSearchTerm(value)))
+	case ExperienceRequired:
+		return search.NewKeywordSingle(f, string(EXPFromSearchTerm(value)))
+	case AttendeeRegistration:
+		return search.NewKeywordSingle(f, string(RegistrationFromSearchTerm(value)))
+	case SpecialCategory:
+		return search.NewKeywordSingle(f, string(CategoryFromSearchTerm(value)))
+	// Keywords that have no special consideration
+	case GameID, MaterialsRequired:
 		return search.NewKeyword(f, value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
 		TotalRounds, TicketsAvailable:
 		return search.NewNumber(f, value)
+	// Generic full text search fields
 	case Group, Title, ShortDescription, LongDescription, GameSystem,
 		RulesEdition, MaterialsProvided, MaterialsRequiredDetails, GMNames, Tournament,
 		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)
+	// Full text search fields that have a subfield as well
 	case Email, Website:
 		text, err := search.NewText(f, value)
 		if err != nil {
@@ -54,8 +67,10 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	// double
 	case Duration, MinimumPlayTime, Cost:
 		return search.NewNumber(f, value)
+	// Date searches
 	case StartDateTime, EndDateTime, LastModified, AlsoRuns:
 		return search.NewDate(f, value)
+	// Special filter
 	case Filter:
 		return FilterTerm{value: value}, nil
 	default:
@@ -139,45 +154,45 @@ const (
 
 var (
 	allFields = map[Field]any{
-		Filter:               struct{}{},
-		GameID:               struct{}{},
-		Year:                 struct{}{},
-		Group:                struct{}{},
-		Title:                struct{}{},
-		ShortDescription:     struct{}{},
-		LongDescription:      struct{}{},
-		EventType:            struct{}{},
-		GameSystem:           struct{}{},
-		RulesEdition:         struct{}{},
-		MinPlayers:           struct{}{},
-		MaxPlayers:           struct{}{},
-		AgeRequired:          struct{}{},
-		ExperienceRequired:   struct{}{},
+		Filter:                   struct{}{},
+		GameID:                   struct{}{},
+		Year:                     struct{}{},
+		Group:                    struct{}{},
+		Title:                    struct{}{},
+		ShortDescription:         struct{}{},
+		LongDescription:          struct{}{},
+		EventType:                struct{}{},
+		GameSystem:               struct{}{},
+		RulesEdition:             struct{}{},
+		MinPlayers:               struct{}{},
+		MaxPlayers:               struct{}{},
+		AgeRequired:              struct{}{},
+		ExperienceRequired:       struct{}{},
 		MaterialsProvided:        struct{}{},
 		MaterialsRequired:        struct{}{},
 		MaterialsRequiredDetails: struct{}{},
-		StartDateTime:        struct{}{},
-		Duration:             struct{}{},
-		EndDateTime:          struct{}{},
-		GMNames:              struct{}{},
-		Website:              struct{}{},
-		Email:                struct{}{},
-		Tournament:           struct{}{},
-		RoundNumber:          struct{}{},
-		TotalRounds:          struct{}{},
-		MinimumPlayTime:      struct{}{},
-		AttendeeRegistration: struct{}{},
-		Cost:                 struct{}{},
-		Location:             struct{}{},
-		RoomName:             struct{}{},
-		TableNumber:          struct{}{},
-		SpecialCategory:      struct{}{},
-		TicketsAvailable:     struct{}{},
-		LastModified:         struct{}{},
-		AlsoRuns:             struct{}{},
-		Prize:                struct{}{},
-		RulesComplexity:      struct{}{},
-		OriginalOrder:        struct{}{},
+		StartDateTime:            struct{}{},
+		Duration:                 struct{}{},
+		EndDateTime:              struct{}{},
+		GMNames:                  struct{}{},
+		Website:                  struct{}{},
+		Email:                    struct{}{},
+		Tournament:               struct{}{},
+		RoundNumber:              struct{}{},
+		TotalRounds:              struct{}{},
+		MinimumPlayTime:          struct{}{},
+		AttendeeRegistration:     struct{}{},
+		Cost:                     struct{}{},
+		Location:                 struct{}{},
+		RoomName:                 struct{}{},
+		TableNumber:              struct{}{},
+		SpecialCategory:          struct{}{},
+		TicketsAvailable:         struct{}{},
+		LastModified:             struct{}{},
+		AlsoRuns:                 struct{}{},
+		Prize:                    struct{}{},
+		RulesComplexity:          struct{}{},
+		OriginalOrder:            struct{}{},
 	}
 )
 

@@ -384,35 +384,35 @@ func FromExternal(e gcbapi.Event) (*Event, error) {
 		OriginalOrder:            e.Attributes.OriginalOrder,
 	}
 
-	if err := ValidateType(e.Attributes.EventType); err != nil {
-		return nil, fmt.Errorf("invalided event type for event %s: %w", e.ID, err)
-	}
-
-	evt.EventType = Type(e.Attributes.EventType)
-
 	if err := ValidateAgeGroup(e.Attributes.AgeRequired); err != nil {
 		return nil, fmt.Errorf("invalided event age required for event %s: %w", e.ID, err)
 	}
 
-	evt.AgeRequired = AgeGroup(e.Attributes.AgeRequired)
+	evt.AgeRequired = AgeGroupFromSearchTerm(e.Attributes.AgeRequired)
+
+	if err := ValidateType(e.Attributes.EventType); err != nil {
+		return nil, fmt.Errorf("invalided event type for event %s: %w", e.ID, err)
+	}
+
+	evt.EventType = EventTypeFromSearchTerm(e.Attributes.EventType)
 
 	if err := ValidateEXP(e.Attributes.ExperienceRequired); err != nil {
 		return nil, fmt.Errorf("invalided event experience required for event %s: %w", e.ID, err)
 	}
 
-	evt.ExperienceRequired = EXP(e.Attributes.ExperienceRequired)
+	evt.ExperienceRequired = EXPFromSearchTerm(e.Attributes.ExperienceRequired)
 
 	if err := ValidateRegistration(e.Attributes.AttendeeRegistration); err != nil {
 		return nil, fmt.Errorf("invalided event registration for event %s: %w", e.ID, err)
 	}
 
-	evt.AttendeeRegistration = Registration(e.Attributes.AttendeeRegistration)
+	evt.AttendeeRegistration = RegistrationFromSearchTerm(e.Attributes.AttendeeRegistration)
 
-	if err := ValidateCategory(e.Attributes.EventType); err != nil {
+	if err := ValidateCategory(e.Attributes.SpecialCategory); err != nil {
 		return nil, fmt.Errorf("invalided event type for event %s: %w", e.ID, err)
 	}
 
-	evt.SpecialCategory = Category(e.Attributes.EventType)
+	evt.SpecialCategory = CategoryFromSearchTerm(e.Attributes.SpecialCategory)
 
 	return evt, nil
 }
