@@ -28,14 +28,14 @@ func NewSearchField(f string, value string) (search.Term, error) {
 
 	switch field {
 	case GameID, EventType, AgeRequired, ExperienceRequired,
-		AttendeeRegistration, SpecialCategory:
+		AttendeeRegistration, SpecialCategory, MaterialsRequired:
 		return search.NewKeyword(f, value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
 		TotalRounds, TicketsAvailable:
 		return search.NewNumber(f, value)
 	case Group, Title, ShortDescription, LongDescription, GameSystem,
-		RulesEdition, MaterialsProvided, GMNames, Tournament,
+		RulesEdition, MaterialsProvided, MaterialsRequiredDetails, GMNames, Tournament,
 		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)
 	case Email, Website:
@@ -153,7 +153,9 @@ var (
 		MaxPlayers:           struct{}{},
 		AgeRequired:          struct{}{},
 		ExperienceRequired:   struct{}{},
-		MaterialsProvided:    struct{}{},
+		MaterialsProvided:        struct{}{},
+		MaterialsRequired:        struct{}{},
+		MaterialsRequiredDetails: struct{}{},
 		StartDateTime:        struct{}{},
 		Duration:             struct{}{},
 		EndDateTime:          struct{}{},
