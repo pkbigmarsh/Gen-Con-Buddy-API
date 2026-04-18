@@ -12,6 +12,20 @@ type Keyword struct {
 	values []string
 }
 
+// NewKeywordSingle creates a terms query
+func NewKeywordSingle(field, val string) (Keyword, error) {
+	keyword := Keyword{}
+	if field == "" {
+		return keyword, fmt.Errorf("cannot create a keyword term without a field")
+	}
+
+	keyword.field = field
+	keyword.values = []string{val}
+
+	return keyword, nil
+}
+
+// NewKeyword creates a terms query, splitting the single string value list by ,
 func NewKeyword(field, vals string) (Keyword, error) {
 	keyword := Keyword{}
 	if field == "" {

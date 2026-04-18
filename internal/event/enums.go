@@ -85,6 +85,8 @@ func ValidateType(v string) error {
 	}
 }
 
+// EventTypeFromSearchTerm converts an external facing enum value to the constant
+// enum value for the event stored in the data store.
 func EventTypeFromSearchTerm(s string) Type {
 	switch s {
 	case "SEM":
@@ -149,6 +151,8 @@ func ValidateEXP(v string) error {
 	}
 }
 
+// EXPFromSearchTerm converts an external facing enum value to the constant
+// enum value for the event stored in the data store.
 func EXPFromSearchTerm(s string) EXP {
 	switch s {
 	case "none":
@@ -183,6 +187,8 @@ func ValidateRegistration(v string) error {
 	}
 }
 
+// RegistrationFromSearchTerm converts an external facing enum value to the constant
+// enum value for the event stored in the data store.
 func RegistrationFromSearchTerm(s string) Registration {
 	switch s {
 	case "open":
@@ -220,6 +226,8 @@ func ValidateCategory(v string) error {
 	}
 }
 
+// CategoryFromSearchTerm converts an external facing enum value to the constant
+// enum value for the event stored in the data store.
 func CategoryFromSearchTerm(s string) Category {
 	switch s {
 	case "none":
