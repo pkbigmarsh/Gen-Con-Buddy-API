@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 )
 
 var (
@@ -70,7 +72,7 @@ func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) (
 		}
 	}()
 
-	eventReader := csv.NewReader(eventFile)
+	eventReader := csv.NewReader(transform.NewReader(eventFile, charmap.Windows1252.NewDecoder()))
 	headers, err := eventReader.Read()
 	if err == io.EOF {
 		return nil, fmt.Errorf("Event CSV file empty")
