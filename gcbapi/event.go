@@ -57,7 +57,7 @@ type EventAttributes struct {
 // document response on the event search endpoint
 type EventSearchResponse struct {
 	Links Links   `json:"links"`
-	Data  []Event `json:"data"`
+	Data  []Event `json:"data,omitempty"`
 	Meta  struct {
 		Total int64 `json:"total"`
 	} `json:"meta"`
@@ -82,4 +82,10 @@ type Links struct {
 type Error struct {
 	Status string `json:"status"`
 	Detail string `json:"detail"`
+}
+
+// EventFetchResponse is moving away from the JSON:API spec
+type EventFetchResponse struct {
+	Events []Event `json:"events,omitempty"`
+	Error  string  `json:"error,omitempty"`
 }
