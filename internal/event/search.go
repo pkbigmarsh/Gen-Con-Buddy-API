@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gencon_buddy_api/internal/search"
 )
@@ -9,9 +10,11 @@ import (
 // SearchRequest contains all the needed information for searching
 // for events
 type SearchRequest struct {
-	Terms []search.Term
-	Page  int
-	Limit int
+	Terms     []search.Term
+	Page      int
+	Limit     int
+	SortField Field
+	SortDir   string
 }
 
 type SearchResponse struct {
@@ -61,6 +64,33 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	default:
 		return nil, fmt.Errorf("Field %s is not supported as a search field", f)
 	}
+}
+
+// NewSortFromString parses a "{field}.{asc|desc}" sort string.
+// Returns the validated Field, direction, and any parse/validation error.
+// The virtual "filter" field is not sortable.
+func NewSortFromString(s string) (Field, string, error) {
+	parts := strings.SplitN(s, ".", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("sort must be formatted as {field}.{asc|desc}, got %q", s)
+	}
+
+	fieldStr, dir := parts[0], parts[1]
+
+	if dir != "asc" && dir != "desc" {
+		return "", "", fmt.Errorf("sort direction must be asc or desc, got %q", dir)
+	}
+
+	field, err := FieldFromString(fieldStr)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid sort field: %w", err)
+	}
+
+	if field == Filter {
+		return "", "", fmt.Errorf("filter is a virtual field and cannot be used for sorting")
+	}
+
+	return field, dir, nil
 }
 
 // FilterTerm is a special [search.Term] implementation for a virtual "filter" field.
