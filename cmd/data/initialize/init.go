@@ -117,6 +117,12 @@ func run(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// When writing the events for the first time, take the `ticketsAvailable`
+	// as the total ticket pool
+	for _, e := range evts {
+		e.TotalTickets = e.TicketsAvailable
+	}
+
 	eventErrs, err := gcb.EventRepo.WriteEvents(cmd.Context(), evts)
 	if len(eventErrs) > 0 {
 		gcb.Logger.Error().Msgf("Failed to write events %s", errors.Join(eventErrs...))

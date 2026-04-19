@@ -45,7 +45,8 @@ type Event struct {
 	RoomName                 string       `json:"roomName"`
 	TableNumber              string       `json:"tableNumber"`
 	SpecialCategory          Category     `json:"specialCategory"`
-	TicketsAvailableTime     int64        `json:"ticketsAvailable"`
+	TicketsAvailable         int64        `json:"ticketsAvailable"`
+	TotalTickets             int64        `json:"totalTickets,omitempty"`
 	LastModified             time.Time    `json:"lastModified"`
 	// some fields were removed in 2024, but not removing them yet
 	Year              int64     `json:"year"`
@@ -148,6 +149,8 @@ func (e *Event) SetFieldFromString(field, value string) error {
 		e.SpecialCategory = Category(value)
 	case "tickets_available":
 		return e.setIntFieldFromString(field, value)
+	case "total_tickets":
+		return e.setIntFieldFromString(field, value)
 	case "last_modified":
 		return e.setTimeFieldFromString(field, value)
 	case "also_runs":
@@ -230,7 +233,9 @@ func (e *Event) setIntFieldFromString(field, value string) error {
 	case "total_rounds":
 		e.TotalRounds = intValue
 	case "tickets_available":
-		e.TicketsAvailableTime = intValue
+		e.TicketsAvailable = intValue
+	case "total_tickets":
+		e.TotalTickets = intValue
 	case "original_order":
 		e.OriginalOrder = intValue
 	default:
@@ -337,7 +342,8 @@ func (e *Event) Externalize() gcbapi.Event {
 			RoomName:                 e.RoomName,
 			TableNumber:              e.TableNumber,
 			SpecialCategory:          string(e.SpecialCategory),
-			TicketsAvailableTime:     e.TicketsAvailableTime,
+			TicketsAvailable:         e.TicketsAvailable,
+			TotalTickets:             e.TotalTickets,
 			LastModified:             e.LastModified,
 			AlsoRuns:                 e.AlsoRuns,
 			Prize:                    e.Prize,
@@ -376,7 +382,8 @@ func FromExternal(e gcbapi.Event) (*Event, error) {
 		Location:                 e.Attributes.Location,
 		RoomName:                 e.Attributes.RoomName,
 		TableNumber:              e.Attributes.TableNumber,
-		TicketsAvailableTime:     e.Attributes.TicketsAvailableTime,
+		TicketsAvailable:         e.Attributes.TicketsAvailable,
+		TotalTickets:             e.Attributes.TotalTickets,
 		LastModified:             e.Attributes.LastModified,
 		AlsoRuns:                 e.Attributes.AlsoRuns,
 		Prize:                    e.Attributes.Prize,

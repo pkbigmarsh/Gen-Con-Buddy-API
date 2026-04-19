@@ -46,7 +46,7 @@ func NewSearchField(f string, value string) (search.Term, error) {
 		return search.NewKeyword(f, value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
-		TotalRounds, TicketsAvailable:
+		TotalRounds, TicketsAvailable, TotalTickets:
 		return search.NewNumber(f, value)
 	// Generic full text search fields
 	case Group, Title, ShortDescription, LongDescription, GameSystem,
@@ -175,6 +175,7 @@ const (
 	TableNumber              Field = "tableNumber"
 	SpecialCategory          Field = "specialCategory"
 	TicketsAvailable         Field = "ticketsAvailable"
+	TotalTickets             Field = "totalTickets"
 	LastModified             Field = "lastModified"
 	AlsoRuns                 Field = "alsoRuns"
 	Prize                    Field = "prize"
@@ -218,6 +219,7 @@ var (
 		TableNumber:              struct{}{},
 		SpecialCategory:          struct{}{},
 		TicketsAvailable:         struct{}{},
+		TotalTickets:             struct{}{},
 		LastModified:             struct{}{},
 		AlsoRuns:                 struct{}{},
 		Prize:                    struct{}{},

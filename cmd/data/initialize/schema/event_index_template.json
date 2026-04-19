@@ -170,6 +170,9 @@
             "ticketsAvailable": {
                 "type": "integer"
             },
+            "totalTickets": {
+                "type": "integer"
+            },
             "originalOrder": {
                 "type": "integer"
             },
