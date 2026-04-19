@@ -58,7 +58,7 @@ func TestNewSortFromString(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "too many parts",
+			name:    "extra dot in direction is rejected",
 			input:   "title.asc.extra",
 			wantErr: true,
 		},
