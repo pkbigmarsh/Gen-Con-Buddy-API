@@ -37,16 +37,14 @@ func (e *EventHandler) Register() {
 
 	e.ws.Route(e.ws.GET("/search").To(e.Search).
 		Doc("Search for events").
-		Returns(http.StatusOK, "OK", gcbapi.EventSearchResponse{}).
-		Returns(http.StatusBadRequest, "Bad Request", gcbapi.EventSearchResponse{}).
-		Returns(http.StatusInternalServerError, "Internal Server Error", gcbapi.EventSearchResponse{}).
+		Writes(gcbapi.EventSearchResponse{}). // TODO
 		Param(e.ws.QueryParameter("filter", "The value to perform the search with.").
 			DataType("string").AllowEmptyValue(true)).
 		Param(e.ws.QueryParameter("limit", "The number of events to return. Default is 100.").
 			DataType("int").DefaultValue("100").Minimum(0).Maximum(5000)).
 		Param(e.ws.QueryParameter("page", "What page of events to return. Pages are based on the limit. Default is 0").
 			DataType("int").DefaultValue("0").Minimum(0).Maximum(100)).
-		Param(e.ws.QueryParameter("sort", "What field to sort the events on formatted by {field name}.{asc|desc}. Can sort by any field in the event.").
+		Param(e.ws.QueryParameter("sort", "What field to sert the events on formatted by {field name}.{asc|desc}. Can sort by any field in the event.").
 			DataType("string").DefaultValue("")))
 
 	restful.Add(e.ws)
@@ -95,7 +93,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid integer for limit: %w", err).Error(),
+					Detail: fmt.Errorf("invalid integer for limti: %w", err).Error(),
 				}
 				return
 			}
