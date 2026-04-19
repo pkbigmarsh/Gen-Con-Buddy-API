@@ -45,7 +45,8 @@ type EventAttributes struct {
 	RoomName                 string    `json:"roomName"`
 	TableNumber              string    `json:"tableNumber"`
 	SpecialCategory          string    `json:"specialCategory"`
-	TicketsAvailableTime     int64     `json:"ticketsAvailable"`
+	TicketsAvailable         int64     `json:"ticketsAvailable"`
+	TotalTickets             int64     `json:"totalTickets"`
 	LastModified             time.Time `json:"lastModified"`
 	AlsoRuns                 time.Time `json:"alsoRuns"`
 	Prize                    string    `json:"prize"`
