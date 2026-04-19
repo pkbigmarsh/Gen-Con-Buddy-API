@@ -14,10 +14,11 @@ import (
 )
 
 type GenconBuddyAPI struct {
-	logger       *zerolog.Logger
-	eventHandler *EventHandler
-	server       *http.Server
-	eventRepo    *event.EventRepo
+	logger           *zerolog.Logger
+	eventHandler     *EventHandler
+	changeLogHandler *ChangeLogHandler
+	server           *http.Server
+	eventRepo        *event.EventRepo
 }
 
 func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port int) *GenconBuddyAPI {
@@ -31,7 +32,16 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	logger.Info().Msg("Initializing EventHandler")
 	eventHandler := NewEventHandler(logger, NewEventManager(logger, eventRepo))
 	eventHandler.Register()
+	gcb.eventHandler = eventHandler
 	logger.Info().Msg("Finidhsed initializing EventHandler")
+
+	logger.Info().Msg("Initializing ChangLogHandler")
+	changeLogHandler := NewChangeLogHandler(logger)
+	if err := changeLogHandler.Register(); err != nil {
+		logger.Err(err).Msg("Failed to create the ChangeLogHandler successfully")
+	}
+	gcb.changeLogHandler = changeLogHandler
+	logger.Info().Msg("Finished initializing ChangeLogHandler")
 
 	logger.Info().Msg("Initializing HTTP Server")
 	logger.Debug().Msgf("Listening to port %d", port)
@@ -41,7 +51,6 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	}
 	logger.Info().Msg("Finished initializing HTTP Server")
 
-	gcb.eventHandler = eventHandler
 	logger.Info().Msg("Finished initializing GenconBuddyAPI")
 
 	gcb.eventRepo = eventRepo

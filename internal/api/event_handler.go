@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// EventHandler is the API Handler for all /events/* endpoints.
+// EventHandler is the API Handler for all /api/events/* endpoints.
 type EventHandler struct {
 	logger  *zerolog.Logger
 	ws      *restful.WebService
@@ -151,6 +151,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 			Status: "internal server error",
 			Detail: "failed executing search request",
 		}
+		return
 	}
 
 	resp.WriteHeader(http.StatusOK)
