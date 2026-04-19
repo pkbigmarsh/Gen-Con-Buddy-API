@@ -66,10 +66,10 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	}
 }
 
-// NewSortFromString parses a "{field}.{asc|desc}" sort string.
+// ParseSort parses a "{field}.{asc|desc}" sort string.
 // Returns the validated Field, direction, and any parse/validation error.
 // The virtual "filter" field is not sortable.
-func NewSortFromString(s string) (Field, string, error) {
+func ParseSort(s string) (Field, string, error) {
 	parts := strings.SplitN(s, ".", 2)
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return "", "", fmt.Errorf("sort must be formatted as {field}.{asc|desc}, got %q", s)

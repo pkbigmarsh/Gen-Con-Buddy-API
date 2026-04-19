@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewSortFromString(t *testing.T) {
+func TestParseSort(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     string
@@ -66,7 +66,7 @@ func TestNewSortFromString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotField, gotDir, err := NewSortFromString(tt.input)
+			gotField, gotDir, err := ParseSort(tt.input)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
