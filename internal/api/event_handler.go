@@ -53,7 +53,6 @@ func (e *EventHandler) Register() {
 // Search handles /events/search api calls
 func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 	var (
-		// sort     string // TODO
 		response  gcbapi.EventSearchResponse
 		searchReq = event.SearchRequest{
 			Page:  0,
@@ -122,7 +121,27 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 
 			searchReq.Page = i
 		case "sort":
-			// TODO lol
+			if len(values) > 1 {
+				resp.WriteHeader(http.StatusBadRequest)
+				response.Error = &gcbapi.Error{
+					Status: "bad request",
+					Detail: "only 1 sort query parameter is allowed",
+				}
+				return
+			}
+
+			sortField, sortDir, err := event.ParseSort(values[0])
+			if err != nil {
+				resp.WriteHeader(http.StatusBadRequest)
+				response.Error = &gcbapi.Error{
+					Status: "bad request",
+					Detail: fmt.Errorf("invalid sort param: %w", err).Error(),
+				}
+				return
+			}
+
+			searchReq.SortField = sortField
+			searchReq.SortDir = sortDir
 		default:
 			// search term?
 			searchTerm, err := event.NewSearchField(queryParam, strings.Join(values, ","))

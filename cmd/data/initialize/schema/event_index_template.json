@@ -15,34 +15,79 @@
                 "type": "integer"
             },
             "group": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "title": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "shortDescription": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "longDescription": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "gameSystem": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "rulesEdition": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "materialsProvided": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "materialsRequired": {
                 "type": "text"
             },
             "materialsRequiredDetails": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "gmNames": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "website": {
                 "type": "text",
@@ -63,22 +108,52 @@
                 }
             },
             "tournament": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "location": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "roomName": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "tableNumber": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "prize": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "rulesComplexity": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword"
+                    }
+                }
             },
             "minPlayers": {
                 "type": "integer"
@@ -93,6 +168,9 @@
                 "type": "integer"
             },
             "ticketsAvailable": {
+                "type": "integer"
+            },
+            "originalOrder": {
                 "type": "integer"
             },
             "duration": {
