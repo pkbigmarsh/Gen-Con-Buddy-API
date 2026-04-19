@@ -18,6 +18,26 @@ const (
 	bulkIndexMeta  = `{ "index": { "_index": "%s", "_id": "%s" } }`
 )
 
+// textSortFields are fields stored as OpenSearch `text` type.
+// Sorting on them requires the `.keyword` subfield for lexicographic ordering.
+var textSortFields = map[Field]struct{}{
+	Group:                    {},
+	Title:                    {},
+	ShortDescription:         {},
+	LongDescription:          {},
+	GameSystem:               {},
+	RulesEdition:             {},
+	MaterialsProvided:        {},
+	MaterialsRequiredDetails: {},
+	GMNames:                  {},
+	Tournament:               {},
+	Location:                 {},
+	RoomName:                 {},
+	TableNumber:              {},
+	Prize:                    {},
+	RulesComplexity:          {},
+}
+
 // EventRepo controls talking to the OpenSearch cluster for event details
 type EventRepo struct {
 	logger     *zerolog.Logger
@@ -112,10 +132,25 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		return SearchResponse{}, fmt.Errorf("page must be non negative, got %d", req.Page)
 	}
 
+	sortField := "startDateTime"
+	sortDir := "asc"
+	if req.SortField != "" {
+		sortField = string(req.SortField)
+		sortDir = req.SortDir
+		if _, isText := textSortFields[req.SortField]; isText {
+			sortField = sortField + ".keyword"
+		}
+	}
+
 	searchBody := map[string]any{
 		"track_total_hits": true,
 		"size":             req.Limit,
 		"from":             req.Limit * req.Page,
+		"sort": []any{
+			map[string]any{
+				sortField: map[string]any{"order": sortDir},
+			},
+		},
 	}
 
 	if len(req.Terms) != 0 {
