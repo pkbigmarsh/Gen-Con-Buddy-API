@@ -7,9 +7,9 @@ import (
 
 var titleStopwords = map[string]bool{
 	"tournament": true, "finals": true, "final": true, "qualifier": true,
-	"round": true, "semi-final": true, "beginner": true, "beginners": true,
+	"round": true, "semi": true, "beginner": true, "beginners": true,
 	"experienced": true, "advanced": true, "mini": true, "open": true,
-	"championship": true, "preliminary": true, "non-qualifier": true,
+	"championship": true, "preliminary": true,
 	"event": true, "demo": true, "intro": true, "introduction": true,
 	"teach": true, "teaching": true, "with": true, "for": true,
 	"to": true, "the": true, "a": true, "an": true, "of": true,
