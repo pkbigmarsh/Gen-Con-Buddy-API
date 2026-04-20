@@ -34,7 +34,12 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	case AgeRequired:
 		return search.NewKeywordSingle(f, string(AgeGroupFromSearchTerm(value)))
 	case EventType:
-		return search.NewKeywordSingle(f, string(EventTypeFromSearchTerm(value)))
+		parts := strings.Split(value, ",")
+		converted := make([]string, len(parts))
+		for i, p := range parts {
+			converted[i] = string(EventTypeFromSearchTerm(p))
+		}
+		return search.NewKeyword(f, strings.Join(converted, ","))
 	case ExperienceRequired:
 		return search.NewKeywordSingle(f, string(EXPFromSearchTerm(value)))
 	case AttendeeRegistration:
