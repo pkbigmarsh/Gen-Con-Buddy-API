@@ -202,3 +202,59 @@ func (fuzzyTitleDerivedAlwaysRank) Match(combo GenConCombo, candidates []BGGGame
 	query := normalize(combo.GameSystem + " " + derived)
 	return bestScoredMatch(query, filtered, similarityScore, tiebreakByRank)
 }
+
+// smartTitleDerivedQuery returns system+derived if derived is informative,
+// else falls back to the game system alone. Used within the already-filtered candidate set.
+func smartTitleDerivedQuery(combo GenConCombo) string {
+	derived := extractTitleDerived(combo.GameSystem, combo.RepTitle)
+	if derived != "" && isInformativeEdition(derived) {
+		return normalize(combo.GameSystem + " " + derived)
+	}
+	return normalize(combo.GameSystem)
+}
+
+// --- Matchers 15–18: Two-stage, title-derived edition smart ---
+
+type exactTitleDerivedSmartRank struct{}
+
+func (exactTitleDerivedSmartRank) Name() string { return "exact-title-derived-smart-rank" }
+func (exactTitleDerivedSmartRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	if len(filtered) == 0 {
+		return MatchResult{}
+	}
+	return exactMatch(smartTitleDerivedQuery(combo), filtered, tiebreakByRank)
+}
+
+type fuzzyTitleDerivedSmartRank struct{}
+
+func (fuzzyTitleDerivedSmartRank) Name() string { return "fuzzy-title-derived-smart-rank" }
+func (fuzzyTitleDerivedSmartRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	if len(filtered) == 0 {
+		return MatchResult{}
+	}
+	return bestScoredMatch(smartTitleDerivedQuery(combo), filtered, similarityScore, tiebreakByRank)
+}
+
+type fuzzyTitleDerivedSmartRated struct{}
+
+func (fuzzyTitleDerivedSmartRated) Name() string { return "fuzzy-title-derived-smart-rated" }
+func (fuzzyTitleDerivedSmartRated) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	if len(filtered) == 0 {
+		return MatchResult{}
+	}
+	return bestScoredMatch(smartTitleDerivedQuery(combo), filtered, similarityScore, tiebreakByRated)
+}
+
+type tokenTitleDerivedSmartRank struct{}
+
+func (tokenTitleDerivedSmartRank) Name() string { return "token-title-derived-smart-rank" }
+func (tokenTitleDerivedSmartRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	if len(filtered) == 0 {
+		return MatchResult{}
+	}
+	return bestScoredMatch(smartTitleDerivedQuery(combo), filtered, jaccardScore, tiebreakByRank)
+}
