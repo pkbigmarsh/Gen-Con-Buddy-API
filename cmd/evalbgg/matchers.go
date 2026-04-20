@@ -99,3 +99,29 @@ func (tokenSystemRank) Name() string { return "token-system-rank" }
 func (tokenSystemRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
 	return bestScoredMatch(normalize(combo.GameSystem), candidates, jaccardScore, tiebreakByRank)
 }
+
+// --- Matchers 5–7: Always edition signal (System + Edition always concatenated) ---
+
+type exactAlwaysEditionRank struct{}
+
+func (exactAlwaysEditionRank) Name() string { return "exact-always-edition-rank" }
+func (exactAlwaysEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	query := normalize(combo.GameSystem + " " + combo.RulesEdition)
+	return exactMatch(query, candidates, tiebreakByRank)
+}
+
+type fuzzyAlwaysEditionRank struct{}
+
+func (fuzzyAlwaysEditionRank) Name() string { return "fuzzy-always-edition-rank" }
+func (fuzzyAlwaysEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	query := normalize(combo.GameSystem + " " + combo.RulesEdition)
+	return bestScoredMatch(query, candidates, similarityScore, tiebreakByRank)
+}
+
+type tokenAlwaysEditionRank struct{}
+
+func (tokenAlwaysEditionRank) Name() string { return "token-always-edition-rank" }
+func (tokenAlwaysEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	query := normalize(combo.GameSystem + " " + combo.RulesEdition)
+	return bestScoredMatch(query, candidates, jaccardScore, tiebreakByRank)
+}
