@@ -163,3 +163,12 @@ func (tokenSmartEditionRank) Name() string { return "token-smart-edition-rank" }
 func (tokenSmartEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
 	return bestScoredMatch(smartQuery(combo), candidates, jaccardScore, tiebreakByRank)
 }
+
+// --- Matcher 12: Pure title signal ---
+
+type fuzzyTitleRank struct{}
+
+func (fuzzyTitleRank) Name() string { return "fuzzy-title-rank" }
+func (fuzzyTitleRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	return bestScoredMatch(normalize(combo.RepTitle), candidates, similarityScore, tiebreakByRank)
+}

@@ -148,3 +148,17 @@ func TestTokenSmartEditionRank(t *testing.T) {
 	require.NotNil(t, result.BGGGame)
 	require.Equal(t, "4", result.BGGGame.ID)
 }
+
+func TestFuzzyTitleRank(t *testing.T) {
+	m := fuzzyTitleRank{}
+	require.Equal(t, "fuzzy-title-rank", m.Name())
+
+	// RepTitle "Wingspan" → fuzzy matches "Wingspan" (ID 1)
+	result := m.Match(GenConCombo{GameSystem: "Wingspan", RulesEdition: "1st", RepTitle: "Wingspan"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "1", result.BGGGame.ID)
+
+	// RepTitle "Axis & Allies 1941 for Beginners" → should find something about axis & allies
+	result = m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941 for Beginners"}, fixture)
+	require.NotNil(t, result.BGGGame)
+}
