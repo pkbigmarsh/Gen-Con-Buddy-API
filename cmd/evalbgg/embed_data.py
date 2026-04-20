@@ -6,7 +6,7 @@ import json
 import os
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT  = os.path.join(SCRIPT_DIR, '..', '..')
+REPO_ROOT  = os.path.normpath(os.path.join(SCRIPT_DIR, '..', '..'))
 
 BGM_FIELDS = [
     'Game ID', 'Title', 'Short Description', 'Event Type',
@@ -53,8 +53,11 @@ def main():
     with open(template_path, encoding='utf-8') as f:
         html = f.read()
 
-    html = html.replace('/*EVAL_DATA_PLACEHOLDER*/',   json.dumps(eval_data))
-    html = html.replace('/*EVENTS_DATA_PLACEHOLDER*/', json.dumps(events_index))
+    def safe_json(obj):
+        return json.dumps(obj).replace('</', '<\\/')
+
+    html = html.replace('/*EVAL_DATA_PLACEHOLDER*/',   safe_json(eval_data))
+    html = html.replace('/*EVENTS_DATA_PLACEHOLDER*/', safe_json(events_index))
 
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html)
