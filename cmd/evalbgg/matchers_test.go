@@ -197,3 +197,66 @@ func TestFuzzyTitleDerivedAlwaysRank(t *testing.T) {
 	}, fixture)
 	require.NotNil(t, result.BGGGame)
 }
+
+func TestExactTitleDerivedSmartRank(t *testing.T) {
+	m := exactTitleDerivedSmartRank{}
+	require.Equal(t, "exact-title-derived-smart-rank", m.Name())
+
+	// derived "1941" is informative → reconstruct "axis & allies 1941" → ID 4
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies 1941 for Beginners",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+
+	// derived empty/generic → falls back: exact on system among filtered → ID 6 ("Axis & Allies")
+	result = m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies Tournament Finals",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "6", result.BGGGame.ID)
+}
+
+func TestFuzzyTitleDerivedSmartRank(t *testing.T) {
+	m := fuzzyTitleDerivedSmartRank{}
+	require.Equal(t, "fuzzy-title-derived-smart-rank", m.Name())
+
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies 1941 for Beginners",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
+
+func TestFuzzyTitleDerivedSmartRated(t *testing.T) {
+	m := fuzzyTitleDerivedSmartRated{}
+	require.Equal(t, "fuzzy-title-derived-smart-rated", m.Name())
+
+	// generic derived → fallback fuzzy on system, rated tiebreak → most rated axis entry (ID 6)
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies Tournament",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "6", result.BGGGame.ID)
+}
+
+func TestTokenTitleDerivedSmartRank(t *testing.T) {
+	m := tokenTitleDerivedSmartRank{}
+	require.Equal(t, "token-title-derived-smart-rank", m.Name())
+
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies 1941 for Beginners",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
