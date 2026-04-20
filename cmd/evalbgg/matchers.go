@@ -172,3 +172,33 @@ func (fuzzyTitleRank) Name() string { return "fuzzy-title-rank" }
 func (fuzzyTitleRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
 	return bestScoredMatch(normalize(combo.RepTitle), candidates, similarityScore, tiebreakByRank)
 }
+
+// --- Matchers 13–14: Two-stage, title-derived edition always ---
+
+const systemFilterThreshold = 0.5
+
+type exactTitleDerivedAlwaysRank struct{}
+
+func (exactTitleDerivedAlwaysRank) Name() string { return "exact-title-derived-always-rank" }
+func (exactTitleDerivedAlwaysRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	derived := extractTitleDerived(combo.GameSystem, combo.RepTitle)
+	if derived == "" || len(filtered) == 0 {
+		return MatchResult{}
+	}
+	query := normalize(combo.GameSystem + " " + derived)
+	return exactMatch(query, filtered, tiebreakByRank)
+}
+
+type fuzzyTitleDerivedAlwaysRank struct{}
+
+func (fuzzyTitleDerivedAlwaysRank) Name() string { return "fuzzy-title-derived-always-rank" }
+func (fuzzyTitleDerivedAlwaysRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	filtered := filterBySystem(combo.GameSystem, candidates, systemFilterThreshold)
+	derived := extractTitleDerived(combo.GameSystem, combo.RepTitle)
+	if derived == "" || len(filtered) == 0 {
+		return MatchResult{}
+	}
+	query := normalize(combo.GameSystem + " " + derived)
+	return bestScoredMatch(query, filtered, similarityScore, tiebreakByRank)
+}
