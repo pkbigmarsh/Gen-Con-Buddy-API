@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog"
@@ -19,9 +20,10 @@ type GenconBuddyAPI struct {
 	changeLogHandler *ChangeLogHandler
 	server           *http.Server
 	eventRepo        *event.EventRepo
+	changeLogRepo    *changelog.Repo
 }
 
-func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port int) *GenconBuddyAPI {
+func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, changeLogRepo *changelog.Repo, port int) *GenconBuddyAPI {
 
 	gcb := &GenconBuddyAPI{
 		logger: logger,
@@ -36,7 +38,8 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	logger.Info().Msg("Finidhsed initializing EventHandler")
 
 	logger.Info().Msg("Initializing ChangLogHandler")
-	changeLogHandler := NewChangeLogHandler(logger)
+	changeLogManager := NewChangeLogManager(logger, changeLogRepo, eventRepo)
+	changeLogHandler := NewChangeLogHandler(logger, changeLogManager)
 	if err := changeLogHandler.Register(); err != nil {
 		logger.Err(err).Msg("Failed to create the ChangeLogHandler successfully")
 	}
@@ -54,6 +57,7 @@ func NewGenconBuddyAPI(logger *zerolog.Logger, eventRepo *event.EventRepo, port 
 	logger.Info().Msg("Finished initializing GenconBuddyAPI")
 
 	gcb.eventRepo = eventRepo
+	gcb.changeLogRepo = changeLogRepo
 
 	return gcb
 }

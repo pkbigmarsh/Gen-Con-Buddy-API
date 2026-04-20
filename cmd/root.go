@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	flagVerbosity    = "verbosity"
-	flagBatchSize    = "batch_size"
-	flagOSAddress    = "os_address"
-	flagOSUsername   = "os_username"
-	flagOSPassword   = "os_password"
-	flagOSEventIndex = "event_index"
+	flagVerbosity        = "verbosity"
+	flagBatchSize        = "batch_size"
+	flagOSAddress        = "os_address"
+	flagOSUsername       = "os_username"
+	flagOSPassword       = "os_password"
+	flagOSEventIndex     = "event_index"
+	flagOSChangeLogIndex = "change_log_index"
 )
 
 var (
@@ -38,11 +39,12 @@ var (
 			}
 
 			config := app.AppConfig{
-				OSAddress:  viper.GetString(flagOSAddress),
-				OSUsername: viper.GetString(flagOSUsername),
-				OSPassword: viper.GetString(flagOSPassword),
-				EventIndex: viper.GetString(flagOSEventIndex),
-				BatchSize:  viper.GetInt(flagBatchSize),
+				OSAddress:      viper.GetString(flagOSAddress),
+				OSUsername:     viper.GetString(flagOSUsername),
+				OSPassword:     viper.GetString(flagOSPassword),
+				EventIndex:     viper.GetString(flagOSEventIndex),
+				ChangeLogIndex: viper.GetString(flagOSChangeLogIndex),
+				BatchSize:      viper.GetInt(flagBatchSize),
 			}
 
 			logger := zerolog.New(
@@ -63,7 +65,6 @@ var (
 
 func init() {
 	viper.AutomaticEnv()
-	// viper.New().SetDefault(flagBatchSize, 100)
 
 	gcbRootCmd.PersistentFlags().StringP(flagVerbosity, "v", "info", "set the log verbosity.")
 	viper.BindPFlag("VERBOSITY", gcbRootCmd.PersistentFlags().Lookup(flagVerbosity))
@@ -79,6 +80,9 @@ func init() {
 
 	gcbRootCmd.PersistentFlags().String(flagOSEventIndex, "event_index", "Root index name. This value is used as the primary event index. Defaults to 'event_index'")
 	viper.BindPFlag("EVENT_INDEX", gcbRootCmd.PersistentFlags().Lookup(flagOSEventIndex))
+
+	gcbRootCmd.PersistentFlags().String(flagOSChangeLogIndex, "change_log_index", "Root index name. This value is used as the primary change log index. Defaults to 'change_log_index'")
+	viper.BindPFlag("CHANGE_LOG_INDEX", gcbRootCmd.PersistentFlags().Lookup(flagOSChangeLogIndex))
 
 	gcbRootCmd.PersistentFlags().Int(flagBatchSize, 100, "Size of batches/pages for interactin with opensearch.")
 	viper.BindPFlag("BATCH_SIZE", gcbRootCmd.PersistentFlags().Lookup(flagBatchSize))

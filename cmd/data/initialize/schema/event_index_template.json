@@ -4,7 +4,7 @@
     },
     "settings": {
         "number_of_shards": 2,
-        "number_of_replicas": 2
+        "number_of_replicas": 1
     },
     "mappings": {
         "properties": {
@@ -210,6 +210,12 @@
                 "type": "keyword"
             },
             "specialCategory": {
+                "type": "keyword"
+            },
+            "deleted": {
+                "type": "boolean"
+            },
+            "lastChangeLogModification": {
                 "type": "keyword"
             }
         }

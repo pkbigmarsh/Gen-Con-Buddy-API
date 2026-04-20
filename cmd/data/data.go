@@ -24,6 +24,7 @@ func init() {
 	Cmd.PersistentFlags().StringP("filepath", "f", "", "the filepath of the csv event data to load")
 
 	Cmd.AddCommand(initialize.InitCmd)
+	Cmd.AddCommand(UpdateCmd)
 }
 
 func run(cmd *cobra.Command, args []string) error {

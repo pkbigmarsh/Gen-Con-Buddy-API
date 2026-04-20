@@ -4,12 +4,14 @@ go 1.25.2
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.1
+	github.com/google/uuid v1.6.0
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/rs/cors v1.10.1
 	github.com/rs/zerolog v1.31.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
+	github.com/wI2L/jsondiff v0.7.1
 	golang.org/x/text v0.14.0
 )
 
@@ -31,6 +33,10 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect

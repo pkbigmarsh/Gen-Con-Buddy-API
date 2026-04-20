@@ -14,6 +14,21 @@ const (
 	dateFormat     = "1/2/2006"
 )
 
+// Some interpretted fields are not useful when determining if an event is equal.
+// This is the list of json paths that can be used by [jsondiff.Ignores].
+const (
+	totalTicketsJsonPath           string = "/totalTickets"
+	lastChangeModificationJsonPath string = "/lastChangeLogModification"
+)
+
+var (
+	// EventJsonCmpIgnoredFields is the list of json paths that can be used by [jsondiff.Ignores].
+	EventJsonCmpIgnoredFields = []string{
+		totalTicketsJsonPath,
+		lastChangeModificationJsonPath,
+	}
+)
+
 type Event struct {
 	GameID                   string       `json:"gameId"`
 	Group                    string       `json:"group"`
@@ -55,6 +70,11 @@ type Event struct {
 	Prize             string    `json:"prize"`
 	RulesComplexity   string    `json:"rulesComplexity"`
 	OriginalOrder     int64     `json:"originalOrder"`
+
+	// Management fields to assist with interactions
+	Deleted bool `json:"deleted"`
+	// ID of the [ChangeLogEntry]
+	LastChangeLogModification string `json:"lastChangeLogModification,omitempty"`
 }
 
 func (e *Event) SetFieldFromString(field, value string) error {
@@ -422,4 +442,9 @@ func FromExternal(e gcbapi.Event) (*Event, error) {
 	evt.SpecialCategory = CategoryFromSearchTerm(e.Attributes.SpecialCategory)
 
 	return evt, nil
+}
+
+type FetchEventsResponse struct {
+	Found   map[string]*Event
+	Missing map[string]struct{}
 }

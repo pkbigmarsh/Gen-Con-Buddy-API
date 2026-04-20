@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"net/http"
 
+	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/rs/zerolog"
@@ -18,18 +19,21 @@ const (
 
 // App holds relevant information for the gcb cli app
 type App struct {
-	Logger    zerolog.Logger
-	OSClient  *opensearch.Client
-	EventRepo *event.EventRepo
+	Logger        zerolog.Logger
+	OSClient      *opensearch.Client
+	EventRepo     *event.EventRepo
+	ChangeLogRepo *changelog.Repo
+	BatchSize     int
 }
 
 // AppConfig contains all configuration needed to initialize the GCB App
 type AppConfig struct {
-	OSAddress  string
-	OSUsername string
-	OSPassword string
-	EventIndex string
-	BatchSize  int
+	OSAddress      string
+	OSUsername     string
+	OSPassword     string
+	EventIndex     string
+	ChangeLogIndex string
+	BatchSize      int
 }
 
 // NewApp initializes the shared GCP App
@@ -51,9 +55,11 @@ func NewApp(logger zerolog.Logger, config AppConfig) (*App, error) {
 	}
 
 	return &App{
-		Logger:    logger,
-		OSClient:  client,
-		EventRepo: event.NewEventRepo(&logger, client, config.BatchSize, config.EventIndex),
+		Logger:        logger,
+		OSClient:      client,
+		EventRepo:     event.NewEventRepo(&logger, client, config.BatchSize, config.EventIndex),
+		ChangeLogRepo: changelog.NewRepo(&logger, client, config.BatchSize, config.ChangeLogIndex),
+		BatchSize:     config.BatchSize,
 	}, nil
 }
 
