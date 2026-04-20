@@ -162,3 +162,38 @@ func TestFuzzyTitleRank(t *testing.T) {
 	result = m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941 for Beginners"}, fixture)
 	require.NotNil(t, result.BGGGame)
 }
+
+func TestExactTitleDerivedAlwaysRank(t *testing.T) {
+	m := exactTitleDerivedAlwaysRank{}
+	require.Equal(t, "exact-title-derived-always-rank", m.Name())
+
+	// System filter finds axis & allies entries; derived "1941" → reconstruct
+	// "axis & allies 1941" → matches ID 4 exactly
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "Global 1942",
+		RepTitle:     "Axis & Allies 1941 for Beginners",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+
+	// No system match → empty
+	result = m.Match(GenConCombo{
+		GameSystem:   "Completely Unknown Game",
+		RulesEdition: "1st",
+		RepTitle:     "Some Random Title",
+	}, fixture)
+	require.Nil(t, result.BGGGame)
+}
+
+func TestFuzzyTitleDerivedAlwaysRank(t *testing.T) {
+	m := fuzzyTitleDerivedAlwaysRank{}
+	require.Equal(t, "fuzzy-title-derived-always-rank", m.Name())
+
+	result := m.Match(GenConCombo{
+		GameSystem:   "Axis & Allies",
+		RulesEdition: "1st",
+		RepTitle:     "Axis & Allies 1941 Championship",
+	}, fixture)
+	require.NotNil(t, result.BGGGame)
+}
