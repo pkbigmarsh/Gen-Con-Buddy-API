@@ -104,3 +104,47 @@ func TestTokenAlwaysEditionRank(t *testing.T) {
 	require.NotNil(t, result.BGGGame)
 	require.Equal(t, "4", result.BGGGame.ID)
 }
+
+func TestExactSmartEditionRank(t *testing.T) {
+	m := exactSmartEditionRank{}
+	require.Equal(t, "exact-smart-edition-rank", m.Name())
+
+	// informative edition → uses System + Edition
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+
+	// generic edition ("1st") → falls back to System only → matches "Axis & Allies" (ID 6)
+	result = m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1st", RepTitle: "Axis & Allies"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "6", result.BGGGame.ID)
+}
+
+func TestFuzzySmartEditionRank(t *testing.T) {
+	m := fuzzySmartEditionRank{}
+	require.Equal(t, "fuzzy-smart-edition-rank", m.Name())
+
+	// informative edition → fuzzy on System + Edition
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
+
+func TestFuzzySmartEditionRated(t *testing.T) {
+	m := fuzzySmartEditionRated{}
+	require.Equal(t, "fuzzy-smart-edition-rated", m.Name())
+
+	// generic edition → fuzzy on System alone → most rated axis & allies (ID 6, 20000)
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1st", RepTitle: "Axis & Allies"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "6", result.BGGGame.ID)
+}
+
+func TestTokenSmartEditionRank(t *testing.T) {
+	m := tokenSmartEditionRank{}
+	require.Equal(t, "token-smart-edition-rank", m.Name())
+
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
