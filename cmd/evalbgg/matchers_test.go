@@ -71,3 +71,36 @@ func TestTokenSystemRank(t *testing.T) {
 	require.NotNil(t, result.BGGGame)
 	require.Greater(t, result.Score, 0.5)
 }
+
+func TestExactAlwaysEditionRank(t *testing.T) {
+	m := exactAlwaysEditionRank{}
+	require.Equal(t, "exact-always-edition-rank", m.Name())
+
+	// "Axis & Allies" + "1941" → matches "Axis & Allies: 1941" (ID 4)
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+
+	// "Wingspan" + "1st" → no exact match (BGG name is just "Wingspan", not "Wingspan 1st")
+	result = m.Match(GenConCombo{GameSystem: "Wingspan", RulesEdition: "1st", RepTitle: "Wingspan"}, fixture)
+	require.Nil(t, result.BGGGame)
+}
+
+func TestFuzzyAlwaysEditionRank(t *testing.T) {
+	m := fuzzyAlwaysEditionRank{}
+	require.Equal(t, "fuzzy-always-edition-rank", m.Name())
+
+	// "Axis & Allies" + "1941" → fuzzy matches "Axis & Allies: 1941" (ID 4) better than others
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
+
+func TestTokenAlwaysEditionRank(t *testing.T) {
+	m := tokenAlwaysEditionRank{}
+	require.Equal(t, "token-always-edition-rank", m.Name())
+
+	result := m.Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1941", RepTitle: "Axis & Allies 1941"}, fixture)
+	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
+}
