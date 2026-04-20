@@ -2,3 +2,4 @@ notes/
 *.env
 bin/
 *.code-workspace
+bgg_eval_viewer.html
