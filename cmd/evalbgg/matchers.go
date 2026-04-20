@@ -125,3 +125,41 @@ func (tokenAlwaysEditionRank) Match(combo GenConCombo, candidates []BGGGame) Mat
 	query := normalize(combo.GameSystem + " " + combo.RulesEdition)
 	return bestScoredMatch(query, candidates, jaccardScore, tiebreakByRank)
 }
+
+// smartQuery returns System+Edition if edition is informative, else System alone.
+func smartQuery(combo GenConCombo) string {
+	if isInformativeEdition(combo.RulesEdition) {
+		return normalize(combo.GameSystem + " " + combo.RulesEdition)
+	}
+	return normalize(combo.GameSystem)
+}
+
+// --- Matchers 8–11: Smart edition signal ---
+
+type exactSmartEditionRank struct{}
+
+func (exactSmartEditionRank) Name() string { return "exact-smart-edition-rank" }
+func (exactSmartEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	return exactMatch(smartQuery(combo), candidates, tiebreakByRank)
+}
+
+type fuzzySmartEditionRank struct{}
+
+func (fuzzySmartEditionRank) Name() string { return "fuzzy-smart-edition-rank" }
+func (fuzzySmartEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	return bestScoredMatch(smartQuery(combo), candidates, similarityScore, tiebreakByRank)
+}
+
+type fuzzySmartEditionRated struct{}
+
+func (fuzzySmartEditionRated) Name() string { return "fuzzy-smart-edition-rated" }
+func (fuzzySmartEditionRated) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	return bestScoredMatch(smartQuery(combo), candidates, similarityScore, tiebreakByRated)
+}
+
+type tokenSmartEditionRank struct{}
+
+func (tokenSmartEditionRank) Name() string { return "token-smart-edition-rank" }
+func (tokenSmartEditionRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult {
+	return bestScoredMatch(smartQuery(combo), candidates, jaccardScore, tiebreakByRank)
+}
