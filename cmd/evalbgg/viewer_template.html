@@ -379,7 +379,7 @@ function renderTable() {
 }
 
 function esc(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Row expansion ────────────────────────────────────────────
@@ -603,6 +603,8 @@ function init() {
   renderAgreeChart();
   renderMatchRateBars();
   applyFilters();
+  // Mark initial sort column (agreement_count ascending)
+  document.querySelectorAll('thead th')[3].classList.add('sort-asc');
 }
 
 init();
