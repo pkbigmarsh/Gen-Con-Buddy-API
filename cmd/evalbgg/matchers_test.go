@@ -190,12 +190,14 @@ func TestFuzzyTitleDerivedAlwaysRank(t *testing.T) {
 	m := fuzzyTitleDerivedAlwaysRank{}
 	require.Equal(t, "fuzzy-title-derived-always-rank", m.Name())
 
+	// derived "1941" → query "axis & allies 1941" → ID 4 (exact score 1.0)
 	result := m.Match(GenConCombo{
 		GameSystem:   "Axis & Allies",
 		RulesEdition: "1st",
 		RepTitle:     "Axis & Allies 1941 Championship",
 	}, fixture)
 	require.NotNil(t, result.BGGGame)
+	require.Equal(t, "4", result.BGGGame.ID)
 }
 
 func TestExactTitleDerivedSmartRank(t *testing.T) {

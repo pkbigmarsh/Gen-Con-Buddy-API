@@ -175,6 +175,7 @@ func (fuzzyTitleRank) Match(combo GenConCombo, candidates []BGGGame) MatchResult
 
 // --- Matchers 13–14: Two-stage, title-derived edition always ---
 
+// systemFilterThreshold casts a wide net so title-derived edition can disambiguate.
 const systemFilterThreshold = 0.5
 
 type exactTitleDerivedAlwaysRank struct{}
