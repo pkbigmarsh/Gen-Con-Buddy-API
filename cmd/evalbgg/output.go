@@ -88,7 +88,7 @@ func consensus(votes map[string]int, rowResults []MatchResult) (id, name string)
 	var bestID string
 	var bestCount int
 	for vid, count := range votes {
-		if count > bestCount {
+		if count > bestCount || (count == bestCount && vid < bestID) {
 			bestID = vid
 			bestCount = count
 		}
