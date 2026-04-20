@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
-"""Inject bgg_eval.csv and data.csv (BGM rows) as JSON into viewer_template.html."""
+"""
+Inject bgg_eval.csv and data.csv (BGM rows) as JSON into viewer_template.html,
+writing bgg_eval_viewer.html at the repo root.
+
+Usage:
+  python3 cmd/evalbgg/embed_data.py
+
+Inputs (relative to repo root):
+  bgg_eval.csv          — output of cmd/evalbgg/evalbgg binary
+  data.csv              — Gen Con events CSV (Windows-1252 encoding)
+  cmd/evalbgg/viewer_template.html — HTML/JS template
+
+Output:
+  bgg_eval_viewer.html  — standalone viewer, open directly in browser
+"""
 
 import csv
 import json
