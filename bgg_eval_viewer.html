@@ -407,8 +407,9 @@ function toggleExpand(dataIdx) {
 }
 
 function buildExpandPanel(row, dataIdx) {
-  const key = rowKey(row);
-  const savedId = scores[key] || '';
+  const key     = rowKey(row);
+  const isBad   = scores[key] === 'BAD_GROUPING';
+  const savedId = isBad ? '' : (scores[key] || '');
   const eventsForCombo = EVENTS_DATA[key] || [];
   const infoTag = row.edition_informative === 'true'
     ? `<span style="margin-left:8px;font-size:10px;background:#7c5cbf33;color:var(--accent2);border-radius:4px;padding:2px 6px;">informative edition</span>` : '';
@@ -427,12 +428,17 @@ function buildExpandPanel(row, dataIdx) {
       </span>
     </div>
     ${buildMatcherGrid(row, dataIdx)}
-    <div class="score-row">
+    <div class="score-row" id="score-input-${dataIdx}" ${isBad ? 'style="display:none"' : ''}>
       <label>correct_bgg_id</label>
       <input type="text" id="score-${dataIdx}" value="${esc(savedId)}" placeholder="BGG ID…"
              oninput="onScoreInput(${dataIdx}, '${escapedKey}', this.value)" />
       <button class="clear-btn" onclick="clearScore(${dataIdx}, '${escapedKey}')">clear</button>
       <span class="save-ok" id="save-ok-${dataIdx}">✓ saved</span>
+      <button class="flag-btn" onclick="flagBadGrouping(${dataIdx}, '${escapedKey}')">⚠ Flag as bad grouping</button>
+    </div>
+    <div class="bad-grouping-row" id="bad-grouping-row-${dataIdx}" ${isBad ? '' : 'style="display:none"'}>
+      <span class="bad-grouping-label">⚠ Flagged: bad grouping</span>
+      <button class="clear-btn" onclick="clearFlag(${dataIdx}, '${escapedKey}')">clear flag</button>
     </div>
   </div>
   <div class="etab-body" id="events-${dataIdx}" style="display:none">
@@ -500,6 +506,20 @@ function clearScore(dataIdx, key) {
   document.getElementById('score-' + dataIdx).value = '';
   saveScore(key, '');
   document.getElementById('save-ok-' + dataIdx).style.display = 'none';
+}
+
+function flagBadGrouping(dataIdx, key) {
+  document.getElementById('score-' + dataIdx).value = '';
+  document.getElementById('save-ok-' + dataIdx).style.display = 'none';
+  saveScore(key, 'BAD_GROUPING');
+  document.getElementById('score-input-' + dataIdx).style.display = 'none';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = '';
+}
+
+function clearFlag(dataIdx, key) {
+  saveScore(key, '');
+  document.getElementById('score-input-' + dataIdx).style.display = '';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = 'none';
 }
 
 // ── Events table ─────────────────────────────────────────────
