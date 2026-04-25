@@ -197,6 +197,9 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
       <div class="lbl">Scored</div>
       <span class="score-big" id="sb-scored">0</span><span class="score-denom"> / <span id="sb-total">—</span></span>
       <div class="prog-bg"><div class="prog-fill" id="sb-prog"></div></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--muted)">
+        <span id="sb-bad-count" style="color:var(--orange)">0</span> bad grouping
+      </div>
     </div>
 
     <div class="stat-block">
@@ -534,10 +537,12 @@ function buildEventsTable(events) {
 // ── Sidebar: live stats ───────────────────────────────────────
 function updateScoredProgress() {
   const total  = EVAL_DATA.length;
-  const scored = EVAL_DATA.filter(r => !!scores[rowKey(r)]).length;
-  document.getElementById('sb-scored').textContent = scored;
-  document.getElementById('sb-total').textContent  = total;
-  document.getElementById('sb-prog').style.width   = (scored / total * 100).toFixed(1) + '%';
+  const bad    = EVAL_DATA.filter(r => scores[rowKey(r)] === 'BAD_GROUPING').length;
+  const scored = EVAL_DATA.filter(r => !!scores[rowKey(r)] && scores[rowKey(r)] !== 'BAD_GROUPING').length;
+  document.getElementById('sb-scored').textContent    = scored;
+  document.getElementById('sb-total').textContent     = total;
+  document.getElementById('sb-prog').style.width      = (scored / total * 100).toFixed(1) + '%';
+  document.getElementById('sb-bad-count').textContent = bad;
 }
 
 function renderAgreeChart() {
