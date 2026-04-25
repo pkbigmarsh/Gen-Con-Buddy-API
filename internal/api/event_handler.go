@@ -162,6 +162,14 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 
 	var err error
 
+	// only show non-deleted events
+	visibleSearchTerm, err := event.NewSearchField(string(event.Deleted), "false")
+	if err != nil {
+		e.logger.Warn().Err(err).Msg("failed to create the visibility filter")
+	} else {
+		searchReq.Terms = append(searchReq.Terms, visibleSearchTerm)
+	}
+
 	response.Meta.Total, response.Data, err = e.manager.Search(req.Request.Context(), searchReq)
 	if err != nil {
 		e.logger.Err(err).Msgf("Failed to perform search request [%+v]", searchReq)

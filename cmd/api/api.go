@@ -40,7 +40,7 @@ func run(cmd *cobra.Command, _ []string) error {
 	port := viper.GetInt(flagPort)
 
 	mainCtx, mainCancel := context.WithCancel(context.Background())
-	apiService := api.NewGenconBuddyAPI(&gcb.Logger, gcb.EventRepo, port)
+	apiService := api.NewGenconBuddyAPI(&gcb.Logger, gcb.EventRepo, gcb.ChangeLogRepo, port)
 
 	gracefullShutdown := make(chan os.Signal, 1)
 	signal.Notify(gracefullShutdown, syscall.SIGINT, syscall.SIGTERM)

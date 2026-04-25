@@ -47,7 +47,7 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	case SpecialCategory:
 		return search.NewKeywordSingle(f, string(CategoryFromSearchTerm(value)))
 	// Keywords that have no special consideration
-	case GameID, MaterialsRequired:
+	case GameID, MaterialsRequired, LastChangeLogModification:
 		return search.NewKeyword(f, value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
@@ -78,6 +78,13 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	// Date searches
 	case StartDateTime, EndDateTime, LastModified, AlsoRuns:
 		return search.NewDate(f, value)
+	// Boolean fields
+	case Deleted:
+		if value != "true" && value != "false" {
+			return nil, fmt.Errorf("cannot search against a boolean field with value [%s], only 'true' or 'false' allowed", value)
+		}
+
+		return search.NewKeywordSingle(f, value)
 	// Special filter
 	case Filter:
 		return FilterTerm{value: value}, nil
@@ -146,90 +153,94 @@ func FieldFromString(s string) (Field, error) {
 
 // All the valid search fields for events
 const (
-	Filter                   Field = "filter"
-	GameID                   Field = "gameId"
-	Year                     Field = "year"
-	Group                    Field = "group"
-	Title                    Field = "title"
-	ShortDescription         Field = "shortDescription"
-	LongDescription          Field = "longDescription"
-	EventType                Field = "eventType"
-	GameSystem               Field = "gameSystem"
-	RulesEdition             Field = "rulesEdition"
-	MinPlayers               Field = "minPlayers"
-	MaxPlayers               Field = "maxPlayers"
-	AgeRequired              Field = "ageRequired"
-	ExperienceRequired       Field = "experienceRequired"
-	MaterialsProvided        Field = "materialsProvided"
-	MaterialsRequired        Field = "materialsRequired"
-	MaterialsRequiredDetails Field = "materialsRequiredDetails"
-	StartDateTime            Field = "startDateTime"
-	Duration                 Field = "duration"
-	EndDateTime              Field = "endDateTime"
-	GMNames                  Field = "gmNames"
-	Website                  Field = "website"
-	Email                    Field = "email"
-	Tournament               Field = "tournament"
-	RoundNumber              Field = "roundNumber"
-	TotalRounds              Field = "totalRounds"
-	MinimumPlayTime          Field = "minimumPlayTime"
-	AttendeeRegistration     Field = "attendeeRegistration"
-	Cost                     Field = "cost"
-	Location                 Field = "location"
-	RoomName                 Field = "roomName"
-	TableNumber              Field = "tableNumber"
-	SpecialCategory          Field = "specialCategory"
-	TicketsAvailable         Field = "ticketsAvailable"
-	TotalTickets             Field = "totalTickets"
-	LastModified             Field = "lastModified"
-	AlsoRuns                 Field = "alsoRuns"
-	Prize                    Field = "prize"
-	RulesComplexity          Field = "rulesComplexity"
-	OriginalOrder            Field = "originalOrder"
+	Filter                    Field = "filter"
+	GameID                    Field = "gameId"
+	Year                      Field = "year"
+	Group                     Field = "group"
+	Title                     Field = "title"
+	ShortDescription          Field = "shortDescription"
+	LongDescription           Field = "longDescription"
+	EventType                 Field = "eventType"
+	GameSystem                Field = "gameSystem"
+	RulesEdition              Field = "rulesEdition"
+	MinPlayers                Field = "minPlayers"
+	MaxPlayers                Field = "maxPlayers"
+	AgeRequired               Field = "ageRequired"
+	ExperienceRequired        Field = "experienceRequired"
+	MaterialsProvided         Field = "materialsProvided"
+	MaterialsRequired         Field = "materialsRequired"
+	MaterialsRequiredDetails  Field = "materialsRequiredDetails"
+	StartDateTime             Field = "startDateTime"
+	Duration                  Field = "duration"
+	EndDateTime               Field = "endDateTime"
+	GMNames                   Field = "gmNames"
+	Website                   Field = "website"
+	Email                     Field = "email"
+	Tournament                Field = "tournament"
+	RoundNumber               Field = "roundNumber"
+	TotalRounds               Field = "totalRounds"
+	MinimumPlayTime           Field = "minimumPlayTime"
+	AttendeeRegistration      Field = "attendeeRegistration"
+	Cost                      Field = "cost"
+	Location                  Field = "location"
+	RoomName                  Field = "roomName"
+	TableNumber               Field = "tableNumber"
+	SpecialCategory           Field = "specialCategory"
+	TicketsAvailable          Field = "ticketsAvailable"
+	TotalTickets              Field = "totalTickets"
+	LastModified              Field = "lastModified"
+	AlsoRuns                  Field = "alsoRuns"
+	Prize                     Field = "prize"
+	RulesComplexity           Field = "rulesComplexity"
+	OriginalOrder             Field = "originalOrder"
+	LastChangeLogModification Field = "lastChangeLogModification"
+	Deleted                   Field = "deleted"
 )
 
 var (
 	allFields = map[Field]any{
-		Filter:                   struct{}{},
-		GameID:                   struct{}{},
-		Year:                     struct{}{},
-		Group:                    struct{}{},
-		Title:                    struct{}{},
-		ShortDescription:         struct{}{},
-		LongDescription:          struct{}{},
-		EventType:                struct{}{},
-		GameSystem:               struct{}{},
-		RulesEdition:             struct{}{},
-		MinPlayers:               struct{}{},
-		MaxPlayers:               struct{}{},
-		AgeRequired:              struct{}{},
-		ExperienceRequired:       struct{}{},
-		MaterialsProvided:        struct{}{},
-		MaterialsRequired:        struct{}{},
-		MaterialsRequiredDetails: struct{}{},
-		StartDateTime:            struct{}{},
-		Duration:                 struct{}{},
-		EndDateTime:              struct{}{},
-		GMNames:                  struct{}{},
-		Website:                  struct{}{},
-		Email:                    struct{}{},
-		Tournament:               struct{}{},
-		RoundNumber:              struct{}{},
-		TotalRounds:              struct{}{},
-		MinimumPlayTime:          struct{}{},
-		AttendeeRegistration:     struct{}{},
-		Cost:                     struct{}{},
-		Location:                 struct{}{},
-		RoomName:                 struct{}{},
-		TableNumber:              struct{}{},
-		SpecialCategory:          struct{}{},
-		TicketsAvailable:         struct{}{},
-		TotalTickets:             struct{}{},
-		LastModified:             struct{}{},
-		AlsoRuns:                 struct{}{},
-		Prize:                    struct{}{},
-		RulesComplexity:          struct{}{},
-		OriginalOrder:            struct{}{},
+		Filter:                    struct{}{},
+		GameID:                    struct{}{},
+		Year:                      struct{}{},
+		Group:                     struct{}{},
+		Title:                     struct{}{},
+		ShortDescription:          struct{}{},
+		LongDescription:           struct{}{},
+		EventType:                 struct{}{},
+		GameSystem:                struct{}{},
+		RulesEdition:              struct{}{},
+		MinPlayers:                struct{}{},
+		MaxPlayers:                struct{}{},
+		AgeRequired:               struct{}{},
+		ExperienceRequired:        struct{}{},
+		MaterialsProvided:         struct{}{},
+		MaterialsRequired:         struct{}{},
+		MaterialsRequiredDetails:  struct{}{},
+		StartDateTime:             struct{}{},
+		Duration:                  struct{}{},
+		EndDateTime:               struct{}{},
+		GMNames:                   struct{}{},
+		Website:                   struct{}{},
+		Email:                     struct{}{},
+		Tournament:                struct{}{},
+		RoundNumber:               struct{}{},
+		TotalRounds:               struct{}{},
+		MinimumPlayTime:           struct{}{},
+		AttendeeRegistration:      struct{}{},
+		Cost:                      struct{}{},
+		Location:                  struct{}{},
+		RoomName:                  struct{}{},
+		TableNumber:               struct{}{},
+		SpecialCategory:           struct{}{},
+		TicketsAvailable:          struct{}{},
+		TotalTickets:              struct{}{},
+		LastModified:              struct{}{},
+		AlsoRuns:                  struct{}{},
+		Prize:                     struct{}{},
+		RulesComplexity:           struct{}{},
+		OriginalOrder:             struct{}{},
+		LastChangeLogModification: struct{}{},
+		Deleted:                   struct{}{},
 	}
 )
 

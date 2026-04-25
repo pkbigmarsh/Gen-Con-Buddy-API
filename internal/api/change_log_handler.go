@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gencon_buddy_api/gcbapi"
@@ -14,17 +13,17 @@ import (
 
 // ChangeLogHandler is the API handler for all /api/changelog/* endpoints
 type ChangeLogHandler struct {
-	logger *zerolog.Logger
-	ws     *restful.WebService
-	// manager ChangeLogManager
+	logger  *zerolog.Logger
+	ws      *restful.WebService
+	manager ChangeLogManager
 }
 
 // NewChangeLogHandler instantiates a [ChangeLogHandler]
-func NewChangeLogHandler(logger *zerolog.Logger) *ChangeLogHandler {
+func NewChangeLogHandler(logger *zerolog.Logger, manager ChangeLogManager) *ChangeLogHandler {
 	return &ChangeLogHandler{
-		logger: logger,
-		ws:     new(restful.WebService),
-		// manager: manager
+		logger:  logger,
+		ws:      new(restful.WebService),
+		manager: manager,
 	}
 }
 
@@ -107,17 +106,16 @@ func (c *ChangeLogHandler) ListChangeLogs(req *restful.Request, resp *restful.Re
 		}
 	}
 
-	c.logger.Debug().Msgf("mocking list change log with limit [%d]", limit)
+	summaries, err := c.manager.ListChangeLogSummaries(req.Request.Context(), limit)
+	if err != nil {
+		c.logger.Err(err).Msg("failed to list change log summaries")
+		resp.WriteHeader(http.StatusInternalServerError)
+		response.Error = "failed to list change log summaries"
+		return
+	}
+
 	response = gcbapi.ListChangeLogsResponse{
-		Entries: []gcbapi.ChangeLogSummary{
-			{
-				ID:           "example",
-				Date:         time.Now().UTC().Format(time.RFC3339),
-				UpdatedCount: 1,
-				CreatedCount: 10,
-				DeletedCount: 124,
-			},
-		},
+		Entries: summaries,
 	}
 	resp.WriteHeader(http.StatusOK)
 }
@@ -168,150 +166,18 @@ func (c *ChangeLogHandler) FetchChangeLog(req *restful.Request, resp *restful.Re
 		return
 	}
 
+	entry, err := c.manager.FetchChangeLogEntry(req.Request.Context(), id)
+	if err != nil {
+		c.logger.Err(err).
+			Str("change_log_id", id).
+			Msg("failed to fetch change log")
+		resp.WriteHeader(http.StatusInternalServerError)
+		response.Error = "failed to fetch change log"
+		return
+	}
+
 	c.logger.Debug().Msgf("mocking fetch change log with id [%s]", id)
 	response = gcbapi.FetchChangeLogResponse{
-		Entry: gcbapi.ChangeLogEntry{
-			ID:   id,
-			Date: time.Now().UTC().Format(time.RFC3339),
-			UpdatedEvents: []gcbapi.Event{
-				{
-					ID:   "ENT24ND246100",
-					Type: "event",
-					Attributes: gcbapi.EventAttributes{
-						GameID:                   "ENT24ND246100",
-						Year:                     0,
-						Group:                    "Unprepared Casters",
-						Title:                    "Unprepared Casters Live!",
-						ShortDescription:         "Join Haley Whipjack, Amelia Som, and some of your other favorite Unprepared Casters guests for the show's first ever live event!",
-						LongDescription:          "",
-						EventType:                "ENT - Entertainment Events",
-						GameSystem:               "",
-						RulesEdition:             "",
-						MinPlayers:               20,
-						MaxPlayers:               100,
-						AgeRequired:              "Teen (13+)",
-						ExperienceRequired:       "None (You've never played before - rules will be taught)",
-						MaterialsProvided:        "",
-						MaterialsRequired:        "No",
-						MaterialsRequiredDetails: "",
-						StartDateTime:            time.Now().UTC(),
-						Duration:                 2,
-						EndDateTime:              time.Now().UTC(),
-						GMNames:                  "Haley Meyer",
-						Website:                  "",
-						Email:                    "",
-						Tournament:               "No",
-						RoundNumber:              1,
-						TotalRounds:              1,
-						MinimumPlayTime:          0,
-						AttendeeRegistration:     "Yes, they can register for this round without having played in any other events",
-						Cost:                     4,
-						Location:                 "Union Station",
-						RoomName:                 "Grand Hall",
-						TableNumber:              "",
-						SpecialCategory:          "none",
-						TicketsAvailable:         54,
-						LastModified:             time.Now().UTC(),
-						AlsoRuns:                 time.Now().UTC(),
-						Prize:                    "",
-						RulesComplexity:          "",
-						OriginalOrder:            0,
-					},
-				},
-			},
-			DeletedEvents: []gcbapi.Event{
-				{
-					ID:   "SEM24ND246101",
-					Type: "event",
-					Attributes: gcbapi.EventAttributes{
-						GameID:                   "SEM24ND246101",
-						Year:                     0,
-						Group:                    "Critical Chaos Entertainment",
-						Title:                    "DM Do's and Don'ts Q&A",
-						ShortDescription:         "Join us as we talk about how to DM! Learn world building, safety tools, and have your DM/GM Questions answered! ",
-						LongDescription:          "Join Offbeat_Outlaw, Ben Brainard, Sphinx (CircleDM), Endevourance and SirFeffers as they talk about how to DM, world building, safety tools, and answer your learning to DM/GM questions! ",
-						EventType:                "SEM - Seminar",
-						GameSystem:               "",
-						RulesEdition:             "",
-						MinPlayers:               50,
-						MaxPlayers:               70,
-						AgeRequired:              "Everyone (6+)",
-						ExperienceRequired:       "None (You've never played before - rules will be taught)",
-						MaterialsProvided:        "",
-						MaterialsRequired:        "No",
-						MaterialsRequiredDetails: "",
-						StartDateTime:            time.Now().UTC(),
-						Duration:                 2,
-						EndDateTime:              time.Now().UTC(),
-						GMNames:                  "Jeff Samuels",
-						Website:                  "",
-						Email:                    "",
-						Tournament:               "No",
-						RoundNumber:              1,
-						TotalRounds:              1,
-						MinimumPlayTime:          0,
-						AttendeeRegistration:     "Yes, they can register for this round without having played in any other events",
-						Cost:                     0,
-						Location:                 "Stadium",
-						RoomName:                 "Meeting Room 12",
-						TableNumber:              "",
-						SpecialCategory:          "none",
-						TicketsAvailable:         48,
-						LastModified:             time.Now().UTC(),
-						AlsoRuns:                 time.Now().UTC(),
-						Prize:                    "",
-						RulesComplexity:          "",
-						OriginalOrder:            0,
-					},
-				},
-			},
-			CreatedEvents: []gcbapi.Event{
-				{
-					ID:   "SPA24ND246103",
-					Type: "event",
-					Attributes: gcbapi.EventAttributes{
-						GameID:                   "SPA24ND246103",
-						Year:                     0,
-						Group:                    "The Revel Alliance",
-						Title:                    "Court Dancing: +1 Performance, +1 Diplomacy",
-						ShortDescription:         "In your eternal quest for just one more point of diplomacy at formal elven functions, why not explore dance? All new dances for 2024!",
-						LongDescription:          "",
-						EventType:                "SPA - Supplemental Activities",
-						GameSystem:               "",
-						RulesEdition:             "",
-						MinPlayers:               8,
-						MaxPlayers:               80,
-						AgeRequired:              "Teen (13+)",
-						ExperienceRequired:       "None (You've never played before - rules will be taught)",
-						MaterialsProvided:        "",
-						MaterialsRequired:        "No",
-						MaterialsRequiredDetails: "",
-						StartDateTime:            time.Now().UTC(),
-						Duration:                 1,
-						EndDateTime:              time.Now().UTC(),
-						GMNames:                  "Whitney Rowlett",
-						Website:                  "moonlightdance.co",
-						Email:                    "whitney@moonlightdance.co",
-						Tournament:               "No",
-						RoundNumber:              1,
-						TotalRounds:              1,
-						MinimumPlayTime:          0,
-						AttendeeRegistration:     "Yes, they can register for this round without having played in any other events",
-						Cost:                     12,
-						Location:                 "Westin",
-						RoomName:                 "House",
-						TableNumber:              "",
-						SpecialCategory:          "none",
-						TicketsAvailable:         39,
-						LastModified:             time.Now().UTC(),
-						AlsoRuns:                 time.Now().UTC(),
-						Prize:                    "",
-						RulesComplexity:          "",
-						OriginalOrder:            0,
-					},
-				},
-			},
-		},
-		Error: "",
+		Entry: entry,
 	}
 }

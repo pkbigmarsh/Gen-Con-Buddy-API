@@ -1,0 +1,28 @@
+{
+    "aliases": {
+        "change_log": {}
+    },
+    "settings": {
+        "number_of_shards": 2,
+        "number_of_replicas": 1
+    },
+    "mappings": {
+        "properties": {
+            "id": {
+                "type": "keyword"
+            },
+            "date": {
+                "type": "date"
+            },
+            "updatedEvents": {
+                "type": "keyword"
+            },
+            "createdEvents": {
+                "type": "keyword"
+            },
+            "deletedEvents": {
+                "type": "keyword"
+            }
+        }
+    }
+}

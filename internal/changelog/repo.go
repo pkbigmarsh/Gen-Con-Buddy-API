@@ -1,10 +1,9 @@
-package event
+package changelog
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -19,57 +18,37 @@ const (
 	updateAction = "update"
 )
 
-// textSortFields are fields stored as OpenSearch `text` type.
-// Sorting on them requires the `.keyword` subfield for lexicographic ordering.
-var textSortFields = map[Field]struct{}{
-	Group:                    {},
-	Title:                    {},
-	ShortDescription:         {},
-	LongDescription:          {},
-	GameSystem:               {},
-	RulesEdition:             {},
-	MaterialsProvided:        {},
-	MaterialsRequiredDetails: {},
-	GMNames:                  {},
-	Tournament:               {},
-	Location:                 {},
-	RoomName:                 {},
-	TableNumber:              {},
-	Prize:                    {},
-	RulesComplexity:          {},
+// Repo controls talking to the OpenSearch cluster for change log details
+type Repo struct {
+	logger         *zerolog.Logger
+	client         *opensearch.Client
+	batchSize      int
+	changeLogIndex string
 }
 
-// EventRepo controls talking to the OpenSearch cluster for event details
-type EventRepo struct {
-	logger     *zerolog.Logger
-	client     *opensearch.Client
-	batchSize  int
-	eventIndex string
-}
-
-// NewEventRepo instantiates a new EventRepo
-func NewEventRepo(logger *zerolog.Logger, client *opensearch.Client, batchSize int, eventIndex string) *EventRepo {
-	return &EventRepo{
-		logger:     logger,
-		client:     client,
-		batchSize:  batchSize,
-		eventIndex: eventIndex,
+// NewRepo instantiates a new Repo
+func NewRepo(logger *zerolog.Logger, client *opensearch.Client, batchSize int, changeLogIndex string) *Repo {
+	return &Repo{
+		logger:         logger,
+		client:         client,
+		batchSize:      batchSize,
+		changeLogIndex: changeLogIndex,
 	}
 }
 
-func (r *EventRepo) CreateEvents(ctx context.Context, events []*Event) ([]error, error) {
-	return r.WriteEvents(ctx, createAction, events)
+func (r *Repo) CreateEntries(ctx context.Context, entries ...*Entry) ([]error, error) {
+	return r.WriteEntries(ctx, createAction, entries)
 }
 
-func (r *EventRepo) WriteEvents(ctx context.Context, action string, events []*Event) ([]error, error) {
-	r.logger.Info().Msgf("Writing %d events, expected batch count: %d", len(events), len(events)/r.batchSize)
+func (r *Repo) WriteEntries(ctx context.Context, action string, entries []*Entry) ([]error, error) {
+	r.logger.Info().Msgf("Writing %d entries, expected batch count: %d", len(entries), len(entries)/r.batchSize)
 	var (
 		body      = ""
 		batchSize = 0
 		docErrs   []error
 	)
-	for _, e := range events {
-		body += fmt.Sprintf(bulkMeta, action, r.eventIndex, e.GameID) + "\n"
+	for _, e := range entries {
+		body += fmt.Sprintf(bulkMeta, action, r.changeLogIndex, e.ID) + "\n"
 		var (
 			docJson []byte
 			err     error
@@ -85,7 +64,7 @@ func (r *EventRepo) WriteEvents(ctx context.Context, action string, events []*Ev
 		}
 
 		if err != nil {
-			docErrs = append(docErrs, fmt.Errorf("failed to marshal event %s: %w", e.GameID, err))
+			docErrs = append(docErrs, fmt.Errorf("failed to marshal change log entry %s: %w", e.ID, err))
 			continue
 		}
 
@@ -93,10 +72,10 @@ func (r *EventRepo) WriteEvents(ctx context.Context, action string, events []*Ev
 		batchSize++
 
 		if batchSize >= r.batchSize {
-			errs, err := r.writeEvents(ctx, action, body)
+			errs, err := r.writeEntries(ctx, action, body)
 			docErrs = append(docErrs, errs...)
 			if err != nil {
-				return docErrs, fmt.Errorf("failed to execute event write batch: %s", err)
+				return docErrs, fmt.Errorf("failed to execute change log write batch: %s", err)
 			}
 
 			body = ""
@@ -105,7 +84,7 @@ func (r *EventRepo) WriteEvents(ctx context.Context, action string, events []*Ev
 	}
 
 	if batchSize > 0 {
-		errs, err := r.writeEvents(ctx, action, body)
+		errs, err := r.writeEntries(ctx, action, body)
 		docErrs = append(docErrs, errs...)
 		return docErrs, err
 	}
@@ -113,10 +92,10 @@ func (r *EventRepo) WriteEvents(ctx context.Context, action string, events []*Ev
 	return docErrs, nil
 }
 
-func (r *EventRepo) writeEvents(ctx context.Context, action string, body string) ([]error, error) {
-	r.logger.Debug().Msgf("Writing events with request: %s", body)
+func (r *Repo) writeEntries(ctx context.Context, action string, body string) ([]error, error) {
+	r.logger.Debug().Msgf("Writing entries with request: %s", body)
 	bulkWriteReq := opensearchapi.BulkRequest{
-		Index: r.eventIndex,
+		Index: r.changeLogIndex,
 		Body:  strings.NewReader(body),
 	}
 
@@ -131,10 +110,10 @@ func (r *EventRepo) writeEvents(ctx context.Context, action string, body string)
 		}
 	}()
 
-	r.logger.Debug().Msgf("Raw write events response: %s", resp.String())
+	r.logger.Debug().Msgf("Raw write entries response: %s", resp.String())
 
 	if resp.IsError() {
-		return nil, fmt.Errorf("failted to write some events, code [%d] headers [%v]", resp.StatusCode, resp.Header)
+		return nil, fmt.Errorf("failted to write some entries, code [%d] headers [%v]", resp.StatusCode, resp.Header)
 	}
 
 	var (
@@ -151,6 +130,7 @@ func (r *EventRepo) writeEvents(ctx context.Context, action string, body string)
 	}
 
 	if !response.Errors {
+		r.logger.Debug().Msg("Succesfully short circuiting")
 		// short circuit because there was no failures
 		return nil, nil
 	}
@@ -177,34 +157,22 @@ func (r *EventRepo) writeEvents(ctx context.Context, action string, body string)
 	return errs, nil
 }
 
-func (r *EventRepo) UpdateEvents(ctx context.Context, events []*Event) ([]error, error) {
-	return r.WriteEvents(ctx, updateAction, events)
+func (r *Repo) UpdateEntries(ctx context.Context, entries []*Entry) ([]error, error) {
+	return r.WriteEntries(ctx, updateAction, entries)
 }
 
-func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchResponse, error) {
+func (r *Repo) List(ctx context.Context, req ListEntriesRequest) ([]*Entry, error) {
 	r.logger.Debug().Msgf("performing search request: %+v", req)
 	if req.Limit <= 0 {
-		return SearchResponse{}, fmt.Errorf("limit cannot be less than 1, got %d", req.Limit)
+		return nil, fmt.Errorf("limit cannot be less than 1, got %d", req.Limit)
 	}
 
-	if req.Page < 0 {
-		return SearchResponse{}, fmt.Errorf("page must be non negative, got %d", req.Page)
-	}
-
-	sortField := "startDateTime"
-	sortDir := "asc"
-	if req.SortField != "" {
-		sortField = string(req.SortField)
-		sortDir = req.SortDir
-		if _, isText := textSortFields[req.SortField]; isText {
-			sortField = sortField + ".keyword"
-		}
-	}
+	sortField := "date"
+	sortDir := "desc"
 
 	searchBody := map[string]any{
 		"track_total_hits": true,
 		"size":             req.Limit,
-		"from":             req.Limit * req.Page,
 		"sort": []any{
 			map[string]any{
 				sortField: map[string]any{"order": sortDir},
@@ -212,43 +180,21 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		},
 	}
 
-	if len(req.Terms) != 0 {
-		var must []any
-		var termErrors []error
-		for _, t := range req.Terms {
-			query, err := t.ToQuery()
-			if err != nil {
-				termErrors = append(termErrors, err)
-				continue
-			}
-
-			must = append(must, query)
-		}
-
-		if len(termErrors) > 0 {
-			return SearchResponse{}, errors.Join(termErrors...)
-		}
-
-		searchBody["query"] = map[string]any{
-			"bool": map[string]any{"must": must},
-		}
-	}
-
 	bodyBytes, err := json.Marshal(searchBody)
 	if err != nil {
-		return SearchResponse{}, fmt.Errorf("failed to marshal search request: %w", err)
+		return nil, fmt.Errorf("failed to marshal search request: %w", err)
 	}
 
 	r.logger.Debug().Msgf("Performing search request: %s", bodyBytes)
 
 	osReq := opensearchapi.SearchRequest{
-		Index: []string{r.eventIndex},
+		Index: []string{r.changeLogIndex},
 		Body:  bytes.NewReader(bodyBytes),
 	}
 
 	osResp, err := osReq.Do(ctx, r.client)
 	if err != nil {
-		return SearchResponse{}, err
+		return nil, err
 	}
 	defer func() {
 		err := osResp.Body.Close()
@@ -259,44 +205,35 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 
 	if osResp.IsError() {
 		r.logger.Error().Msgf("search request failed. Raw response: %s", osResp.String())
-		return SearchResponse{}, fmt.Errorf("failed search request %d", osResp.StatusCode)
+		return nil, fmt.Errorf("failed search request %d", osResp.StatusCode)
 	}
 
 	r.logger.Debug().Msgf("search request debuging: %s", osResp.String())
 
 	var (
-		response eventSearchResponse
-		events   []*Event
+		response entriesearchResponse
+		entries  []*Entry
 		buff     = bytes.NewBuffer([]byte{})
 	)
 
 	if _, err := buff.ReadFrom(osResp.Body); err != nil {
-		return SearchResponse{}, fmt.Errorf("failed to read search response body: %w", err)
+		return nil, fmt.Errorf("failed to read search response body: %w", err)
 	}
 
 	if err := json.Unmarshal(buff.Bytes(), &response); err != nil {
-		return SearchResponse{}, fmt.Errorf("failed to unmarshal search response: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal search response: %w", err)
 	}
 
 	for _, e := range response.Hits.Hits {
-		events = append(events, e.Event)
+		entries = append(entries, e.Entry)
 	}
 
-	return SearchResponse{
-		TotalEvents: response.Hits.Total.Value,
-		Events:      events,
-	}, nil
+	return entries, nil
 }
 
-func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEventsResponse, error) {
-	if len(ids) == 0 {
-		return FetchEventsResponse{
-			Found:   make(map[string]*Event),
-			Missing: make(map[string]struct{}),
-		}, nil
-	}
-	r.logger.Debug().Msgf("Fetching events for ids: %v", ids)
-	fetchResp := FetchEventsResponse{}
+func (r *Repo) FetchEntries(ctx context.Context, ids ...string) (FetchEntriesResponse, error) {
+	r.logger.Debug().Msgf("Fetching entries for ids: %v", ids)
+	fetchResp := FetchEntriesResponse{}
 
 	mgetBody := struct {
 		IDs []string `json:"ids"`
@@ -312,7 +249,7 @@ func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEvents
 	r.logger.Debug().Msgf("Raw mget request body: %s", string(jsonBytes))
 
 	req := opensearchapi.MgetRequest{
-		Index: r.eventIndex,
+		Index: r.changeLogIndex,
 		Body:  bytes.NewReader(jsonBytes),
 	}
 
@@ -337,10 +274,10 @@ func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEvents
 	r.logger.Debug().Msgf("raw mget response body: %s", resp.String())
 
 	var (
-		response      eventMgetResponse
-		foundEvents   = make(map[string]*Event)
-		missingEvents = make(map[string]struct{})
-		buff          = bytes.NewBuffer([]byte{})
+		response       entryMgetResponse
+		foundEntries   = make(map[string]*Entry)
+		missingEntries = make(map[string]struct{})
+		buff           = bytes.NewBuffer([]byte{})
 	)
 
 	if _, err := buff.ReadFrom(resp.Body); err != nil {
@@ -357,19 +294,19 @@ func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEvents
 
 	for _, d := range response.Docs {
 		if d.Found {
-			foundEvents[d.ID] = d.Event
+			foundEntries[d.ID] = d.Event
 		} else {
-			missingEvents[d.ID] = struct{}{}
+			missingEntries[d.ID] = struct{}{}
 		}
 	}
 
-	return FetchEventsResponse{
-		Found:   foundEvents,
-		Missing: missingEvents,
+	return FetchEntriesResponse{
+		Found:   foundEntries,
+		Missing: missingEntries,
 	}, nil
 }
 
-type eventSearchResponse struct {
+type entriesearchResponse struct {
 	Hits struct {
 		Total struct {
 			Value int64 `json:"value"`
@@ -379,7 +316,7 @@ type eventSearchResponse struct {
 			Index string  `json:"_index"`
 			ID    string  `json:"_id"`
 			Score float64 `json:"_score"`
-			Event *Event  `json:"_source,omitempty"`
+			Entry *Entry  `json:"_source,omitempty"`
 		} `json:"hits"`
 	} `json:"hits"`
 	Errors bool `json:"errors"`
@@ -394,7 +331,7 @@ type eventSearchResponse struct {
 }
 
 type bulkUpdateAction struct {
-	Doc *Event `json:"doc"`
+	Doc *Entry `json:"doc"`
 }
 
 type bulkResponse struct {
@@ -421,7 +358,7 @@ type bulkActionResponse struct {
 	Error  *osError `json:"error,omitempty"`
 }
 
-type eventMgetResponse struct {
+type entryMgetResponse struct {
 	Docs []struct {
 		Index          string `json:"_index"`
 		ID             string `json:"_id"`
@@ -429,7 +366,7 @@ type eventMgetResponse struct {
 		SequenceNumber int64  `json:"_seq_no"`
 		PrimaryTerm    int64  `json:"_primary_term"`
 		Found          bool   `json:"found"`
-		Event          *Event `json:"_source,omitempty"`
+		Event          *Entry `json:"_source,omitempty"`
 	} `json:"docs"`
 	Error *osError `json:"error,omitempty"`
 }
