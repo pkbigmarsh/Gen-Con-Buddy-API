@@ -353,7 +353,8 @@ function renderTable() {
 
   filteredRows.forEach(({ row, i }) => {
     const key      = rowKey(row);
-    const isScored = !!scores[key];
+    const isBad    = scores[key] === 'BAD_GROUPING';
+    const isScored = !!scores[key] && !isBad;
     const agree    = parseInt(row.agreement_count);
     const isOpen   = expandedIdx === i;
 
@@ -372,7 +373,7 @@ function renderTable() {
       <td>${row.event_count}</td>
       <td><span class="pill ${pillClass(agree)}">${agree}</span></td>
       <td>${consensus}</td>
-      <td class="${isScored ? 'scored-yes' : 'scored-no'}">${isScored ? '✓' : '○'}</td>
+      <td class="${isBad ? 'scored-bad' : isScored ? 'scored-yes' : 'scored-no'}">${isBad ? '⚠' : isScored ? '✓' : '○'}</td>
     `;
     tr.addEventListener('click', () => toggleExpand(i));
     tbody.appendChild(tr);
