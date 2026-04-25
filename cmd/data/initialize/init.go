@@ -63,7 +63,7 @@ func run(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("failed to read persistent flag event_index: %w", err)
 		}
 
-		if err := cleanEventIndex(cmd.Context(), gcb, eventIndex, eventIndexFile); err != nil {
+		if err := cleanIndex(cmd.Context(), gcb, eventIndex, eventIndexFile); err != nil {
 			return fmt.Errorf("failed to clean and create the event index: %w", err)
 		}
 
@@ -72,7 +72,7 @@ func run(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("failed to read persistent flag change log index: %w", err)
 		}
 
-		if err := cleanEventIndex(cmd.Context(), gcb, changeLogIndex, changeLogIndexFile); err != nil {
+		if err := cleanIndex(cmd.Context(), gcb, changeLogIndex, changeLogIndexFile); err != nil {
 			return fmt.Errorf("failed to clean and create the change log index: %w", err)
 		}
 	}
@@ -98,8 +98,8 @@ func run(cmd *cobra.Command, _ []string) error {
 	return err
 }
 
-func cleanEventIndex(ctx context.Context, gcb *app.App, index_name string, index_settings []byte) error {
-	gcb.Logger.Info().Msgf("Cleanin index: %s", index_name)
+func cleanIndex(ctx context.Context, gcb *app.App, index_name string, index_settings []byte) error {
+	gcb.Logger.Info().Msgf("Cleaning index: %s", index_name)
 	deleteIndexRequest := opensearchapi.IndicesDeleteRequest{
 		Index: []string{index_name},
 	}
@@ -117,11 +117,11 @@ func cleanEventIndex(ctx context.Context, gcb *app.App, index_name string, index
 
 	// if the index is not found, then it counts as being deleted
 	if resp.IsError() && resp.StatusCode != 404 {
-		gcb.Logger.Warn().Msgf("There was a problem deleting indicies for pattern [%s]. Got code [%d]", index_name, resp.StatusCode)
+		gcb.Logger.Warn().Msgf("There was a problem deleting idex [%s]. Got code [%d]", index_name, resp.StatusCode)
 		gcb.Logger.Error().Msgf("Raw delete response: %s", resp.String())
 		return fmt.Errorf("failed to delete indices %s", index_name)
 	} else {
-		gcb.Logger.Debug().Msgf("Debuge delete response: %s", resp.String())
+		gcb.Logger.Debug().Msgf("Debug delete response: %s", resp.String())
 	}
 
 	createIndexRequest := opensearchapi.IndicesCreateRequest{
@@ -145,7 +145,7 @@ func cleanEventIndex(ctx context.Context, gcb *app.App, index_name string, index
 		gcb.Logger.Error().Msgf("Raw create response: %s", createResp.String())
 		return fmt.Errorf("failed to create index %s", index_name)
 	} else {
-		gcb.Logger.Debug().Msgf("Debuge create response: %s", createResp.String())
+		gcb.Logger.Debug().Msgf("Debug create response: %s", createResp.String())
 	}
 
 	return nil

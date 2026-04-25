@@ -8,6 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	cleanFlag    string = "clean"
+	filepathFlag string = "filepath"
+)
+
 var (
 	eventIndex string
 
@@ -20,8 +25,8 @@ var (
 )
 
 func init() {
-	Cmd.PersistentFlags().BoolP("clean", "c", false, "cleans all indicies before initilizing the data")
-	Cmd.PersistentFlags().StringP("filepath", "f", "", "the filepath of the csv event data to load")
+	Cmd.PersistentFlags().BoolP(cleanFlag, "c", false, "cleans all indicies before initilizing the data")
+	Cmd.PersistentFlags().StringP(filepathFlag, "f", "", "the filepath of the csv event data to load")
 
 	Cmd.AddCommand(initialize.InitCmd)
 	Cmd.AddCommand(UpdateCmd)

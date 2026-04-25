@@ -5,7 +5,7 @@ run_update() {
     echo -e "#\n##\n#### --- ${1} --- ###\n##\n#" 
     ./gcb_test data update \
         --os_address "http://localhost:9200" \
-        --local_file "./${1}"
+        --filepath "./${1}"
 
     if [ $? -ne 0 ]; then
         echo -e "#\n##\n#### --- ${1} failed --- ###\n##\n#"

@@ -2,7 +2,6 @@ package data
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -21,7 +20,6 @@ const (
 	// defaultDownloadURL for the gencon event downloads.
 	// Found on https://www.gencon.com/gen-con-indy/how-to-find-events.
 	defaultDownloadURL = "https://www.gencon.com/downloads/events.zip"
-	flagLocalFile      = "local_file"
 )
 
 var (
@@ -36,9 +34,6 @@ var (
 func init() {
 	UpdateCmd.Flags().String(flagDownloadURL, defaultDownloadURL, "Remote url to download the GenCon events from. Default value is [https://www.gencon.com/downloads/events.zip].")
 	viper.BindPFlag("DOWNLOAD_URL", UpdateCmd.Flags().Lookup(flagDownloadURL))
-
-	UpdateCmd.Flags().String(flagLocalFile, "", "Local file to use as event update csv. If set, it will be used over the default download url.")
-	viper.BindPFlag("LOCAL_FILE", UpdateCmd.Flags().Lookup(flagLocalFile))
 }
 
 func update(cmd *cobra.Command, _ []string) error {
@@ -47,9 +42,9 @@ func update(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to read %s flag: %w", flagDownloadURL, err)
 	}
 
-	localFilepath, err := cmd.Flags().GetString(flagLocalFile)
+	localFilepath, err := cmd.Flags().GetString(filepathFlag)
 	if err != nil {
-		return fmt.Errorf("failed to read %s flag: %w", flagLocalFile, err)
+		return fmt.Errorf("failed to read %s flag: %w", filepathFlag, err)
 	}
 
 	if downloadURL != defaultDownloadURL && localFilepath != "" {
@@ -140,14 +135,6 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 			Msg("failed to mark deleted events as deleted")
 	}
 
-	// testing
-	clEntryJson, _ := json.Marshal(clEntry)
-	gcb.Logger.Info().
-		Str("change_log_entry_id", clEntry.ID).
-		Str("change_log_date", clEntry.Date).
-		Int("event_count", len(eventList)).
-		Msgf("Created change log entry: %s", string(clEntryJson))
-
 	itemErr, err := gcb.ChangeLogRepo.CreateEntries(ctx, clEntry)
 	if err != nil {
 		return fmt.Errorf("failed to call opensearch with a create request: %w", err)
@@ -210,7 +197,7 @@ func processChangeLogBatch(ctx context.Context, gcb *app.App, clEntry *changelog
 
 		p, err := jsondiff.Compare(e, updateEvent, jsondiff.Ignores(event.EventJsonCmpIgnoredFields...))
 		if err != nil {
-			gcb.Logger.Debug().Err(err).Msg("failed to call jsondiff")
+			gcb.Logger.Err(err).Msg("failed to call jsondiff")
 		}
 
 		if len(p) > 0 {
@@ -245,6 +232,7 @@ func processChangeLogDeletions(ctx context.Context, gcb *app.App, clEntry *chang
 	if err != nil {
 		return fmt.Errorf("could not build search term for change log id: %w", err)
 	}
+
 	alreadyDeletedSearchTerm, err := event.NewSearchField(string(event.Deleted), "true")
 	if err != nil {
 		return fmt.Errorf("cound not build deleted search term: %w", err)
