@@ -225,6 +225,7 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
         <option value="all">All rows</option>
         <option value="unscored">Unscored only</option>
         <option value="scored">Scored only</option>
+        <option value="bad-grouping">Bad grouping</option>
       </select>
       <span class="row-count" id="row-count"></span>
     </div>
@@ -305,13 +306,15 @@ function applyFilters() {
     .map((row, i) => ({ row, i }))
     .filter(({ row, i }) => {
       if (q && !row.game_system.toLowerCase().includes(q)) return false;
-      const agree = parseInt(row.agreement_count);
-      const key   = rowKey(row);
-      const isScored = !!scores[key];
-      if (mode === 'lte7'     && agree > 7)    return false;
-      if (mode === 'lte10'    && agree > 10)   return false;
-      if (mode === 'unscored' && isScored)     return false;
-      if (mode === 'scored'   && !isScored)    return false;
+      const agree    = parseInt(row.agreement_count);
+      const key      = rowKey(row);
+      const isBad    = scores[key] === 'BAD_GROUPING';
+      const isScored = !!scores[key] && !isBad;
+      if (mode === 'lte7'         && agree > 7)  return false;
+      if (mode === 'lte10'        && agree > 10) return false;
+      if (mode === 'unscored'     && (isScored || isBad)) return false;
+      if (mode === 'scored'       && !isScored)  return false;
+      if (mode === 'bad-grouping' && !isBad)     return false;
       return true;
     });
   sortRows();
