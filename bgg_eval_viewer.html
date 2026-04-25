@@ -495,6 +495,8 @@ function useId(dataIdx, key, id) {
   document.getElementById('score-' + dataIdx).value = id;
   saveScore(key, id);
   document.getElementById('save-ok-' + dataIdx).style.display = 'inline';
+  document.getElementById('score-input-' + dataIdx).style.display = '';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = 'none';
 }
 
 function onScoreInput(dataIdx, key, value) {
