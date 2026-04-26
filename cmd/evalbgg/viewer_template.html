@@ -111,6 +111,28 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
 .pill-blu  { background: #1a2a3a; color: var(--blue); }
 .scored-yes { color: var(--green); }
 .scored-no  { color: #333; }
+.scored-bad { color: var(--orange); }
+.scored-ngr { color: var(--blue); }
+
+/* flag buttons */
+.flag-btn {
+  background: none; border: 1px solid var(--orange); color: var(--orange);
+  border-radius: 4px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+}
+.flag-btn:hover { background: #3d2a10; }
+.ngr-btn {
+  background: none; border: 1px solid var(--blue); color: var(--blue);
+  border-radius: 4px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+}
+.ngr-btn:hover { background: #1a2a3a; }
+.bad-grouping-row, .no-good-result-row {
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 6px; padding: 10px;
+}
+.bad-grouping-row    { background: #3d2a1022; }
+.no-good-result-row  { background: #1a2a3a22; }
+.bad-grouping-label   { font-size: 11px; color: var(--orange); }
+.no-good-result-label { font-size: 11px; color: var(--blue); }
 
 /* ── Expanded row panel ──────────────────────────────────── */
 .expand-td { padding: 0 !important; }
@@ -192,6 +214,10 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
       <div class="lbl">Scored</div>
       <span class="score-big" id="sb-scored">0</span><span class="score-denom"> / <span id="sb-total">—</span></span>
       <div class="prog-bg"><div class="prog-fill" id="sb-prog"></div></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--muted)">
+        <span id="sb-bad-count" style="color:var(--orange)">0</span> bad grouping ·
+        <span id="sb-ngr-count" style="color:var(--blue)">0</span> no good result
+      </div>
     </div>
 
     <div class="stat-block">
@@ -217,6 +243,8 @@ tbody td { padding: 9px 12px; font-size: 12px; vertical-align: middle; }
         <option value="all">All rows</option>
         <option value="unscored">Unscored only</option>
         <option value="scored">Scored only</option>
+        <option value="bad-grouping">Bad grouping</option>
+        <option value="no-good-result">No good result</option>
       </select>
       <span class="row-count" id="row-count"></span>
     </div>
@@ -297,13 +325,17 @@ function applyFilters() {
     .map((row, i) => ({ row, i }))
     .filter(({ row, i }) => {
       if (q && !row.game_system.toLowerCase().includes(q)) return false;
-      const agree = parseInt(row.agreement_count);
-      const key   = rowKey(row);
-      const isScored = !!scores[key];
-      if (mode === 'lte7'     && agree > 7)    return false;
-      if (mode === 'lte10'    && agree > 10)   return false;
-      if (mode === 'unscored' && isScored)     return false;
-      if (mode === 'scored'   && !isScored)    return false;
+      const agree    = parseInt(row.agreement_count);
+      const key      = rowKey(row);
+      const isBad    = scores[key] === 'BAD_GROUPING';
+      const isNgr    = scores[key] === 'NO_GOOD_RESULT';
+      const isScored = !!scores[key] && !isBad && !isNgr;
+      if (mode === 'lte7'           && agree > 7)              return false;
+      if (mode === 'lte10'          && agree > 10)             return false;
+      if (mode === 'unscored'       && (isScored || isBad || isNgr)) return false;
+      if (mode === 'scored'         && !isScored)              return false;
+      if (mode === 'bad-grouping'   && !isBad)                 return false;
+      if (mode === 'no-good-result' && !isNgr)                 return false;
       return true;
     });
   sortRows();
@@ -342,7 +374,9 @@ function renderTable() {
 
   filteredRows.forEach(({ row, i }) => {
     const key      = rowKey(row);
-    const isScored = !!scores[key];
+    const isBad    = scores[key] === 'BAD_GROUPING';
+    const isNgr    = scores[key] === 'NO_GOOD_RESULT';
+    const isScored = !!scores[key] && !isBad && !isNgr;
     const agree    = parseInt(row.agreement_count);
     const isOpen   = expandedIdx === i;
 
@@ -351,6 +385,9 @@ function renderTable() {
     if (row.consensus_id) {
       consensus = `${esc(row.consensus_name || '')} ${bggLink(row.consensus_id)}`;
     }
+
+    const scoredClass  = isBad ? 'scored-bad' : isNgr ? 'scored-ngr' : isScored ? 'scored-yes' : 'scored-no';
+    const scoredSymbol = isBad ? '⚠' : isNgr ? '✗' : isScored ? '✓' : '○';
 
     // main row
     const tr = document.createElement('tr');
@@ -361,7 +398,7 @@ function renderTable() {
       <td>${row.event_count}</td>
       <td><span class="pill ${pillClass(agree)}">${agree}</span></td>
       <td>${consensus}</td>
-      <td class="${isScored ? 'scored-yes' : 'scored-no'}">${isScored ? '✓' : '○'}</td>
+      <td class="${scoredClass}">${scoredSymbol}</td>
     `;
     tr.addEventListener('click', () => toggleExpand(i));
     tbody.appendChild(tr);
@@ -395,8 +432,10 @@ function toggleExpand(dataIdx) {
 }
 
 function buildExpandPanel(row, dataIdx) {
-  const key = rowKey(row);
-  const savedId = scores[key] || '';
+  const key     = rowKey(row);
+  const isBad   = scores[key] === 'BAD_GROUPING';
+  const isNgr   = scores[key] === 'NO_GOOD_RESULT';
+  const savedId = (isBad || isNgr) ? '' : (scores[key] || '');
   const eventsForCombo = EVENTS_DATA[key] || [];
   const infoTag = row.edition_informative === 'true'
     ? `<span style="margin-left:8px;font-size:10px;background:#7c5cbf33;color:var(--accent2);border-radius:4px;padding:2px 6px;">informative edition</span>` : '';
@@ -415,12 +454,22 @@ function buildExpandPanel(row, dataIdx) {
       </span>
     </div>
     ${buildMatcherGrid(row, dataIdx)}
-    <div class="score-row">
+    <div class="score-row" id="score-input-${dataIdx}" ${(isBad || isNgr) ? 'style="display:none"' : ''}>
       <label>correct_bgg_id</label>
       <input type="text" id="score-${dataIdx}" value="${esc(savedId)}" placeholder="BGG ID…"
              oninput="onScoreInput(${dataIdx}, '${escapedKey}', this.value)" />
       <button class="clear-btn" onclick="clearScore(${dataIdx}, '${escapedKey}')">clear</button>
       <span class="save-ok" id="save-ok-${dataIdx}">✓ saved</span>
+      <button class="flag-btn" onclick="flagBadGrouping(${dataIdx}, '${escapedKey}')">⚠ Flag as bad grouping</button>
+      <button class="ngr-btn" onclick="flagNoGoodResult(${dataIdx}, '${escapedKey}')">✗ No good result</button>
+    </div>
+    <div class="bad-grouping-row" id="bad-grouping-row-${dataIdx}" ${isBad ? '' : 'style="display:none"'}>
+      <span class="bad-grouping-label">⚠ Flagged: bad grouping</span>
+      <button class="clear-btn" onclick="clearFlag(${dataIdx}, '${escapedKey}')">clear flag</button>
+    </div>
+    <div class="no-good-result-row" id="no-good-result-row-${dataIdx}" ${isNgr ? '' : 'style="display:none"'}>
+      <span class="no-good-result-label">✗ Flagged: no good result</span>
+      <button class="clear-btn" onclick="clearFlag(${dataIdx}, '${escapedKey}')">clear flag</button>
     </div>
   </div>
   <div class="etab-body" id="events-${dataIdx}" style="display:none">
@@ -477,6 +526,34 @@ function useId(dataIdx, key, id) {
   document.getElementById('score-' + dataIdx).value = id;
   saveScore(key, id);
   document.getElementById('save-ok-' + dataIdx).style.display = 'inline';
+  document.getElementById('score-input-' + dataIdx).style.display = '';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = 'none';
+  document.getElementById('no-good-result-row-' + dataIdx).style.display = 'none';
+}
+
+function flagBadGrouping(dataIdx, key) {
+  document.getElementById('score-' + dataIdx).value = '';
+  document.getElementById('save-ok-' + dataIdx).style.display = 'none';
+  saveScore(key, 'BAD_GROUPING');
+  document.getElementById('score-input-' + dataIdx).style.display = 'none';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = '';
+  document.getElementById('no-good-result-row-' + dataIdx).style.display = 'none';
+}
+
+function flagNoGoodResult(dataIdx, key) {
+  document.getElementById('score-' + dataIdx).value = '';
+  document.getElementById('save-ok-' + dataIdx).style.display = 'none';
+  saveScore(key, 'NO_GOOD_RESULT');
+  document.getElementById('score-input-' + dataIdx).style.display = 'none';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = 'none';
+  document.getElementById('no-good-result-row-' + dataIdx).style.display = '';
+}
+
+function clearFlag(dataIdx, key) {
+  saveScore(key, '');
+  document.getElementById('score-input-' + dataIdx).style.display = '';
+  document.getElementById('bad-grouping-row-' + dataIdx).style.display = 'none';
+  document.getElementById('no-good-result-row-' + dataIdx).style.display = 'none';
 }
 
 function onScoreInput(dataIdx, key, value) {
@@ -529,10 +606,14 @@ function buildEventsTable(events) {
 // ── Sidebar: live stats ───────────────────────────────────────
 function updateScoredProgress() {
   const total  = EVAL_DATA.length;
-  const scored = EVAL_DATA.filter(r => !!scores[rowKey(r)]).length;
-  document.getElementById('sb-scored').textContent = scored;
-  document.getElementById('sb-total').textContent  = total;
-  document.getElementById('sb-prog').style.width   = (scored / total * 100).toFixed(1) + '%';
+  const bad    = EVAL_DATA.filter(r => scores[rowKey(r)] === 'BAD_GROUPING').length;
+  const ngr    = EVAL_DATA.filter(r => scores[rowKey(r)] === 'NO_GOOD_RESULT').length;
+  const scored = EVAL_DATA.filter(r => !!scores[rowKey(r)] && scores[rowKey(r)] !== 'BAD_GROUPING' && scores[rowKey(r)] !== 'NO_GOOD_RESULT').length;
+  document.getElementById('sb-scored').textContent    = scored;
+  document.getElementById('sb-total').textContent     = total;
+  document.getElementById('sb-prog').style.width      = (scored / total * 100).toFixed(1) + '%';
+  document.getElementById('sb-bad-count').textContent = bad;
+  document.getElementById('sb-ngr-count').textContent = ngr;
 }
 
 function renderAgreeChart() {
