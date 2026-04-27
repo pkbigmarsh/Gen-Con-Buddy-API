@@ -58,11 +58,8 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("load gencon combos: %w", err)
 	}
 
-	// TODO(overrides): Before running the cascade, accept an --overrides flag
-	// pointing to a JSON file with the same structure as this output. Load the
-	// overrides, then after cascade results are computed, replace any entry for a
-	// matching (game_system, rules_edition) key with the override value. Overrides
-	// that name a combo not present in the Gen Con data are silently ignored.
+	// TODO(overrides): merge --overrides file after cascade; see design spec at
+	// docs/superpowers/specs/2026-04-26-bgg-cascade-matcher-design.md
 
 	var mappings []mappingEntry
 	for _, combo := range combos {

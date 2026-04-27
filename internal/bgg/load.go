@@ -36,10 +36,12 @@ func LoadCorpus(path string) (Corpus, error) {
 		if err != nil {
 			return Corpus{}, fmt.Errorf("read bgg row: %w", err)
 		}
+		name := csvField(row, idx, "name")
 		g := BGGGame{
-			ID:            csvField(row, idx, "id"),
-			Name:          csvField(row, idx, "name"),
-			YearPublished: csvField(row, idx, "yearpublished"),
+			ID:             csvField(row, idx, "id"),
+			Name:           name,
+			NormalizedName: Normalize(name),
+			YearPublished:  csvField(row, idx, "yearpublished"),
 			IsExpansion:   csvField(row, idx, "is_expansion") == "1",
 			Rank:          parseInt(csvField(row, idx, "rank")),
 			BayesAverage:  parseFloat(csvField(row, idx, "bayesaverage")),
@@ -81,7 +83,6 @@ func LoadGenConCombos(path string) ([]GenConCombo, error) {
 
 	type comboKey struct{ system, edition string }
 	titleCounts := make(map[comboKey]map[string]int)
-	counts := make(map[comboKey]int)
 
 	for {
 		row, err := r.Read()
@@ -98,21 +99,23 @@ func LoadGenConCombos(path string) ([]GenConCombo, error) {
 			system:  csvField(row, idx, "Game System"),
 			edition: csvField(row, idx, "Rules Edition"),
 		}
-		title := csvField(row, idx, "Title")
-		counts[key]++
 		if titleCounts[key] == nil {
 			titleCounts[key] = make(map[string]int)
 		}
-		titleCounts[key][title]++
+		titleCounts[key][csvField(row, idx, "Title")]++
 	}
 
 	var combos []GenConCombo
-	for key, count := range counts {
+	for key, titles := range titleCounts {
+		total := 0
+		for _, n := range titles {
+			total += n
+		}
 		combos = append(combos, GenConCombo{
 			GameSystem:   key.system,
 			RulesEdition: key.edition,
-			RepTitle:     mostCommon(titleCounts[key]),
-			EventCount:   count,
+			RepTitle:     mostCommon(titles),
+			EventCount:   total,
 		})
 	}
 	return combos, nil

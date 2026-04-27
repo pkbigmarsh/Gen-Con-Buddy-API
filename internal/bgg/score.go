@@ -36,25 +36,12 @@ func levenshtein(a, b []rune) int {
 			if a[i-1] == b[j-1] {
 				curr[j] = prev[j-1]
 			} else {
-				curr[j] = 1 + min3(prev[j], curr[j-1], prev[j-1])
+				curr[j] = 1 + min(prev[j], min(curr[j-1], prev[j-1]))
 			}
 		}
 		prev, curr = curr, prev
 	}
 	return prev[lb]
-}
-
-func min3(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-		return c
-	}
-	if b < c {
-		return b
-	}
-	return c
 }
 
 // JaccardScore returns token-set Jaccard similarity in [0,1].

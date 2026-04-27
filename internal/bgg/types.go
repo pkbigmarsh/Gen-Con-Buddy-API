@@ -2,9 +2,10 @@ package bgg
 
 // BGGGame holds all fields from the BGG CSV for a single game.
 type BGGGame struct {
-	ID            string
-	Name          string
-	YearPublished string
+	ID             string
+	Name           string
+	NormalizedName string // Normalize(Name), pre-computed at load time
+	YearPublished  string
 	IsExpansion   bool
 	Rank          int // 0 = unranked
 	BayesAverage  float64

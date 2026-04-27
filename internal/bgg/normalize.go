@@ -34,7 +34,6 @@ func Normalize(s string) string {
 	var b strings.Builder
 	for _, r := range s {
 		if unicode.Is(unicode.Mn, r) {
-			// combining mark (diacritic) — strip it
 			continue
 		}
 		if r == '&' || unicode.IsLetter(r) || unicode.IsDigit(r) {

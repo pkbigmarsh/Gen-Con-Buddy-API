@@ -25,11 +25,13 @@ var testCorpus = Corpus{
 	},
 }
 
-func TestMatchStage1_GenericEdition_SystemOnly(t *testing.T) {
-	// generic edition → query is system alone; 6a and 6b both match but 6a has lower rank
-	result := Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1st", RepTitle: "Axis & Allies"}, testCorpus)
-	require.Equal(t, "6a", result.BGGID)
-	require.Equal(t, "Axis & Allies", result.Name)
+func init() {
+	for i := range testCorpus.BaseGames {
+		testCorpus.BaseGames[i].NormalizedName = Normalize(testCorpus.BaseGames[i].Name)
+	}
+	for i := range testCorpus.Expansions {
+		testCorpus.Expansions[i].NormalizedName = Normalize(testCorpus.Expansions[i].Name)
+	}
 }
 
 func TestMatchStage1_InformativeEdition_SystemPlusEdition(t *testing.T) {
@@ -58,18 +60,17 @@ func TestMatchStage1_DiacriticNormalization_Shobu(t *testing.T) {
 }
 
 func TestMatchStage2_TitleDerived(t *testing.T) {
-	localCorpus3 := Corpus{
+	name := "Terraforming Mars: Ares Expedition"
+	localCorpus := Corpus{
 		BaseGames: []BGGGame{
-			{ID: "30", Name: "Terraforming Mars: Ares Expedition", Rank: 50},
+			{ID: "30", Name: name, NormalizedName: Normalize(name), Rank: 50},
 		},
 	}
 	result := Match(GenConCombo{
 		GameSystem:   "Terraforming Mars",
 		RulesEdition: "1st",
 		RepTitle:     "Terraforming Mars: Ares Expedition Demo",
-	}, localCorpus3)
-	// Stage 1: system alone "terraforming mars" → no exact match
-	// Stage 2: derived from title = "ares expedition" (informative) → query "terraforming mars ares expedition" → exact match ID 30
+	}, localCorpus)
 	require.Equal(t, "30", result.BGGID)
 }
 

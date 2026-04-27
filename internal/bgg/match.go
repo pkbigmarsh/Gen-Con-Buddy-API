@@ -3,29 +3,19 @@ package bgg
 // Match runs the 3-stage exact cascade against the given corpus and returns the
 // best confident result, or an empty MatchResult if nothing clears any stage.
 //
-// TODO(overrides): Accept an overrides map as a parameter once the override
-// system is built:
-//
-//	func Match(combo GenConCombo, corpus Corpus, overrides map[string]string) MatchResult
-//
-// Before stage 1, check if (combo.GameSystem + "|" + combo.RulesEdition) has
-// an entry in overrides. If so, look it up in the corpus and return it
-// immediately, bypassing the cascade. This ensures manually verified results
-// survive re-runs of match-bgg without needing to touch the cascade logic.
+// TODO(overrides): check overrides map before the cascade; see design spec at
+// docs/superpowers/specs/2026-04-26-bgg-cascade-matcher-design.md
 func Match(combo GenConCombo, corpus Corpus) MatchResult {
-	// Stage 1: exact match on smart query, base games only.
 	query := smartQuery(combo)
 	if r := exactBest(query, corpus.BaseGames); r.BGGID != "" {
 		return r
 	}
 
-	// Stage 2: exact match on title-derived smart query, base games only.
 	if r := exactBest(smartTitleDerivedQuery(combo), corpus.BaseGames); r.BGGID != "" {
 		return r
 	}
 
-	// Stage 3: exact match on smart query, expansions only.
-	// Only runs when the edition is informative enough to distinguish an expansion.
+	// Only runs when edition is informative enough to distinguish an expansion from its base game.
 	if IsInformativeEdition(combo.RulesEdition) {
 		if r := exactBest(query, corpus.Expansions); r.BGGID != "" {
 			return r
@@ -61,7 +51,7 @@ func exactBest(query string, candidates []BGGGame) MatchResult {
 	var best *BGGGame
 	for i := range candidates {
 		c := &candidates[i]
-		if Normalize(c.Name) != query {
+		if c.NormalizedName != query {
 			continue
 		}
 		if best == nil || betterRank(*c, *best) {
