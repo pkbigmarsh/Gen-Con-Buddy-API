@@ -13,7 +13,9 @@ var testCorpus = Corpus{
 		{ID: "3", Name: "Ark Nova", Rank: 2, UsersRated: 60000},
 		{ID: "4", Name: "Axis & Allies: 1941", Rank: 100, UsersRated: 5000},
 		{ID: "5", Name: "Axis & Allies: 1942", Rank: 80, UsersRated: 8000},
-		{ID: "6", Name: "Axis & Allies", Rank: 200, UsersRated: 20000},
+		// IDs 6a and 6b both normalize to "axis & allies" — used to test tiebreak.
+		{ID: "6a", Name: "Axis & Allies", Rank: 50, UsersRated: 20000},
+		{ID: "6b", Name: "Axis & Allies!", Rank: 200, UsersRated: 20000},
 		{ID: "7", Name: "SHŌBU", Rank: 50, UsersRated: 3000},
 		{ID: "8", Name: "Orléans", Rank: 30, UsersRated: 15000},
 	},
@@ -24,9 +26,9 @@ var testCorpus = Corpus{
 }
 
 func TestMatchStage1_GenericEdition_SystemOnly(t *testing.T) {
-	// generic edition → query is system alone
+	// generic edition → query is system alone; 6a and 6b both match but 6a has lower rank
 	result := Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1st", RepTitle: "Axis & Allies"}, testCorpus)
-	require.Equal(t, "6", result.BGGID)
+	require.Equal(t, "6a", result.BGGID)
 	require.Equal(t, "Axis & Allies", result.Name)
 }
 
@@ -37,11 +39,10 @@ func TestMatchStage1_InformativeEdition_SystemPlusEdition(t *testing.T) {
 }
 
 func TestMatchStage1_TiebreakByRank(t *testing.T) {
-	// Two games could match "axis & allies" — ID 6 (rank 200) is the only
-	// exact match so rank tiebreak is not exercised here, but the pattern
-	// is validated: lower rank wins when scores are equal.
+	// IDs 6a (rank 50) and 6b (rank 200) both normalize to "axis & allies".
+	// The lower-ranked game (6a) must win the tiebreak.
 	result := Match(GenConCombo{GameSystem: "Axis & Allies", RulesEdition: "1st", RepTitle: "Axis & Allies"}, testCorpus)
-	require.Equal(t, "6", result.BGGID)
+	require.Equal(t, "6a", result.BGGID)
 }
 
 func TestMatchStage1_DiacriticNormalization(t *testing.T) {

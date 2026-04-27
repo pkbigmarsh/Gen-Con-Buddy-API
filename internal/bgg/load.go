@@ -118,8 +118,6 @@ func LoadGenConCombos(path string) ([]GenConCombo, error) {
 	return combos, nil
 }
 
-// --- helpers ---
-
 func headerIndex(headers []string) map[string]int {
 	m := make(map[string]int, len(headers))
 	for i, h := range headers {

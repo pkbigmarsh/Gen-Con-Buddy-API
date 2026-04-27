@@ -90,13 +90,17 @@ func update(cmd *cobra.Command, _ []string) error {
 // If the file does not exist, it logs a warning and returns an empty map.
 func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]string {
 	path, err := cmd.Flags().GetString("bgg-mapping")
-	if err != nil || path == "" {
+	if err != nil {
+		logger.Warn().Err(err).Msg("failed to read bgg-mapping flag; events will have no bggId")
+		return map[string]string{}
+	}
+	if path == "" {
 		return map[string]string{}
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		logger.Warn().Str("path", path).Msg("bgg mapping file not found; events will have no BggID")
+		logger.Warn().Str("path", path).Msg("bgg mapping file not found; events will have no bggId")
 		return map[string]string{}
 	}
 
@@ -108,7 +112,7 @@ func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]string
 		} `json:"mappings"`
 	}
 	if err := json.Unmarshal(data, &file); err != nil {
-		logger.Warn().Err(err).Str("path", path).Msg("failed to parse bgg mapping file; events will have no BggID")
+		logger.Warn().Err(err).Str("path", path).Msg("failed to parse bgg mapping file; events will have no bggId")
 		return map[string]string{}
 	}
 

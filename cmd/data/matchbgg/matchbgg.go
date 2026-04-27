@@ -11,20 +11,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// MappingEntry is one resolved (game_system, rules_edition) → BGG game mapping.
-type MappingEntry struct {
+type mappingEntry struct {
 	GameSystem   string `json:"game_system"`
 	RulesEdition string `json:"rules_edition"`
 	BGGID        string `json:"bgg_id"`
 	BGGName      string `json:"bgg_name"`
 }
 
-// MappingFile is the full output written to disk.
-type MappingFile struct {
+type mappingFile struct {
 	GeneratedAt string         `json:"generated_at"`
 	TotalCombos int            `json:"total_combos"`
 	Matched     int            `json:"matched"`
-	Mappings    []MappingEntry `json:"mappings"`
+	Mappings    []mappingEntry `json:"mappings"`
 }
 
 var MatchBGGCmd = &cobra.Command{
@@ -66,13 +64,13 @@ func run(cmd *cobra.Command, _ []string) error {
 	// matching (game_system, rules_edition) key with the override value. Overrides
 	// that name a combo not present in the Gen Con data are silently ignored.
 
-	var mappings []MappingEntry
+	var mappings []mappingEntry
 	for _, combo := range combos {
 		result := bgg.Match(combo, corpus)
 		if result.BGGID == "" {
 			continue
 		}
-		mappings = append(mappings, MappingEntry{
+		mappings = append(mappings, mappingEntry{
 			GameSystem:   combo.GameSystem,
 			RulesEdition: combo.RulesEdition,
 			BGGID:        result.BGGID,
@@ -88,7 +86,7 @@ func run(cmd *cobra.Command, _ []string) error {
 		return mappings[i].RulesEdition < mappings[j].RulesEdition
 	})
 
-	out := MappingFile{
+	out := mappingFile{
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
 		TotalCombos: len(combos),
 		Matched:     len(mappings),
