@@ -5,6 +5,7 @@ import (
 
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/cmd/data/initialize"
+	"github.com/gencon_buddy_api/cmd/data/matchbgg"
 	"github.com/spf13/cobra"
 )
 
@@ -30,6 +31,7 @@ func init() {
 
 	Cmd.AddCommand(initialize.InitCmd)
 	Cmd.AddCommand(UpdateCmd)
+	Cmd.AddCommand(matchbgg.MatchBGGCmd)
 }
 
 func run(cmd *cobra.Command, args []string) error {
