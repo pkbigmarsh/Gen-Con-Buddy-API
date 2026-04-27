@@ -5,6 +5,7 @@ import (
 
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/cmd/data/initialize"
+	"github.com/gencon_buddy_api/cmd/data/matchbgg"
 	"github.com/spf13/cobra"
 )
 
@@ -27,9 +28,11 @@ var (
 func init() {
 	Cmd.PersistentFlags().BoolP(cleanFlag, "c", false, "cleans all indicies before initilizing the data")
 	Cmd.PersistentFlags().StringP(filepathFlag, "f", "", "the filepath of the csv event data to load")
+	Cmd.PersistentFlags().String("bgg-mapping", "bgg_mapping.json", "path to the BGG mapping file produced by match-bgg")
 
 	Cmd.AddCommand(initialize.InitCmd)
 	Cmd.AddCommand(UpdateCmd)
+	Cmd.AddCommand(matchbgg.MatchBGGCmd)
 }
 
 func run(cmd *cobra.Command, args []string) error {

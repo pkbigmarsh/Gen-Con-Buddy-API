@@ -63,6 +63,7 @@ type Event struct {
 	TicketsAvailable         int64        `json:"ticketsAvailable"`
 	TotalTickets             int64        `json:"totalTickets,omitempty"`
 	LastModified             time.Time    `json:"lastModified"`
+	BggID                    string       `json:"bggId"`
 	// some fields were removed in 2024, but not removing them yet
 	Year              int64     `json:"year"`
 	AlsoRuns          time.Time `json:"alsoRuns"`
@@ -365,6 +366,7 @@ func (e *Event) Externalize() gcbapi.Event {
 			TicketsAvailable:         e.TicketsAvailable,
 			TotalTickets:             e.TotalTickets,
 			LastModified:             e.LastModified,
+			BggID:                    e.BggID,
 			AlsoRuns:                 e.AlsoRuns,
 			Prize:                    e.Prize,
 			RulesComplexity:          e.RulesComplexity,
@@ -405,6 +407,7 @@ func FromExternal(e gcbapi.Event) (*Event, error) {
 		TicketsAvailable:         e.Attributes.TicketsAvailable,
 		TotalTickets:             e.Attributes.TotalTickets,
 		LastModified:             e.Attributes.LastModified,
+		BggID:                    e.Attributes.BggID,
 		AlsoRuns:                 e.Attributes.AlsoRuns,
 		Prize:                    e.Attributes.Prize,
 		RulesComplexity:          e.Attributes.RulesComplexity,
