@@ -2,14 +2,17 @@ package data
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/gencon_buddy_api/internal/search"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wI2L/jsondiff"
@@ -72,7 +75,48 @@ func update(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to fetch event list for updating: %w", err)
 	}
 
+	bggMapping := loadBGGMapping(cmd, gcb.Logger)
+	for _, e := range events {
+		if id, ok := bggMapping[e.GameSystem+"|"+e.RulesEdition]; ok {
+			e.BggID = id
+		}
+	}
+
 	return processChangeLogEvents(cmd.Context(), gcb, events)
+}
+
+// loadBGGMapping reads the mapping file produced by match-bgg and returns a
+// map keyed by "GameSystem|RulesEdition" → BGG ID string.
+// If the file does not exist, it logs a warning and returns an empty map.
+func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]string {
+	path, err := cmd.Flags().GetString("bgg-mapping")
+	if err != nil || path == "" {
+		return map[string]string{}
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		logger.Warn().Str("path", path).Msg("bgg mapping file not found; events will have no BggID")
+		return map[string]string{}
+	}
+
+	var file struct {
+		Mappings []struct {
+			GameSystem   string `json:"game_system"`
+			RulesEdition string `json:"rules_edition"`
+			BGGID        string `json:"bgg_id"`
+		} `json:"mappings"`
+	}
+	if err := json.Unmarshal(data, &file); err != nil {
+		logger.Warn().Err(err).Str("path", path).Msg("failed to parse bgg mapping file; events will have no BggID")
+		return map[string]string{}
+	}
+
+	m := make(map[string]string, len(file.Mappings))
+	for _, e := range file.Mappings {
+		m[e.GameSystem+"|"+e.RulesEdition] = e.BGGID
+	}
+	return m
 }
 
 func downloadEvents(ctx context.Context, gcb *app.App, downloadURL string) ([]*event.Event, error) {
