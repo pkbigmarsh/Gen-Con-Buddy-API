@@ -11,6 +11,9 @@
             "gameId": {
                 "type": "keyword"
             },
+            "bggId": {
+                "type": "keyword"
+            },
             "year": {
                 "type": "integer"
             },
