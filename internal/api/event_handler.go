@@ -49,7 +49,9 @@ func (e *EventHandler) Register() {
 
 	e.ws.Route(e.ws.GET("/facets/gameSystem").To(e.GameSystemFacets).
 		Doc("Get all distinct game system values with event counts").
-		Writes(gcbapi.GameSystemFacetsResponse{}))
+		Writes(gcbapi.KeywordFacetsResponse{}).
+		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
+			DataType("int").DefaultValue("100")))
 
 	restful.Add(e.ws)
 }
@@ -190,16 +192,34 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 
 // GameSystemFacets handles GET /api/events/facets/gameSystem
 func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Response) {
-	facets, err := e.manager.GetGameSystemFacets(req.Request.Context())
+	const maxSize = 5000
+	size := 100
+
+	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
+		parsed, err := strconv.Atoi(sizeParam)
+		if err != nil || parsed < 1 {
+			resp.WriteHeader(http.StatusBadRequest)
+			resp.Write([]byte(`{"error":"size must be a positive integer"}`))
+			return
+		}
+		if parsed > maxSize {
+			resp.WriteHeader(http.StatusBadRequest)
+			resp.Write([]byte(`{"error":"size cannot exceed 5000"}`))
+			return
+		}
+		size = parsed
+	}
+
+	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "gameSystem.keyword", size)
 	if err != nil {
 		e.logger.Err(err).Msg("failed to get game system facets")
-		body, _ := json.Marshal(gcbapi.GameSystemFacetsResponse{Error: "failed to retrieve game system facets"})
+		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve game system facets"})
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write(body)
 		return
 	}
 
-	body, err := json.Marshal(gcbapi.GameSystemFacetsResponse{Values: facets})
+	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
 	if err != nil {
 		e.logger.Err(err).Msg("failed to marshal game system facets response")
 		resp.WriteHeader(http.StatusInternalServerError)

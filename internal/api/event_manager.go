@@ -22,16 +22,16 @@ func NewEventManager(logger *zerolog.Logger, repo *event.EventRepo) EventManager
 	}
 }
 
-// GetGameSystemFacets returns all distinct game system values with their event counts.
-func (m EventManager) GetGameSystemFacets(ctx context.Context) ([]gcbapi.GameSystemFacet, error) {
-	facets, err := m.repo.GetGameSystemFacets(ctx)
+// GetKeywordFacets returns distinct values and counts for any keyword field or subfield.
+func (m EventManager) GetKeywordFacets(ctx context.Context, field string, size int) ([]gcbapi.KeywordFacet, error) {
+	facets, err := m.repo.GetKeywordFacets(ctx, field, size)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]gcbapi.GameSystemFacet, len(facets))
+	result := make([]gcbapi.KeywordFacet, len(facets))
 	for i, f := range facets {
-		result[i] = gcbapi.GameSystemFacet{Value: f.Value, Count: f.Count}
+		result[i] = gcbapi.KeywordFacet{Value: f.Value, Count: f.Count}
 	}
 	return result, nil
 }

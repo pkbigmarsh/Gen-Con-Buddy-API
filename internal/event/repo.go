@@ -288,20 +288,23 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 	}, nil
 }
 
-// GameSystemFacet is a single aggregation bucket from OpenSearch.
-type GameSystemFacet struct {
+// KeywordFacet is a single aggregation bucket from OpenSearch.
+type KeywordFacet struct {
 	Value string
 	Count int64
 }
 
-func (r *EventRepo) GetGameSystemFacets(ctx context.Context) ([]GameSystemFacet, error) {
+// GetKeywordFacets returns distinct values and counts for any keyword (or keyword subfield) in the index.
+// field should be a keyword field or a .keyword subfield (e.g. "gameSystem.keyword").
+// size controls the maximum number of buckets returned.
+func (r *EventRepo) GetKeywordFacets(ctx context.Context, field string, size int) ([]KeywordFacet, error) {
 	body := map[string]any{
 		"size": 0,
 		"aggs": map[string]any{
-			"game_systems": map[string]any{
+			"facet_values": map[string]any{
 				"terms": map[string]any{
-					"field": "gameSystem.keyword",
-					"size":  5000,
+					"field": field,
+					"size":  size,
 					"order": map[string]any{"_key": "asc"},
 				},
 			},
@@ -335,12 +338,12 @@ func (r *EventRepo) GetGameSystemFacets(ctx context.Context) ([]GameSystemFacet,
 
 	var raw struct {
 		Aggregations struct {
-			GameSystems struct {
+			FacetValues struct {
 				Buckets []struct {
 					Key      string `json:"key"`
 					DocCount int64  `json:"doc_count"`
 				} `json:"buckets"`
-			} `json:"game_systems"`
+			} `json:"facet_values"`
 		} `json:"aggregations"`
 	}
 
@@ -352,12 +355,12 @@ func (r *EventRepo) GetGameSystemFacets(ctx context.Context) ([]GameSystemFacet,
 		return nil, fmt.Errorf("failed to unmarshal facet response: %w", err)
 	}
 
-	var facets []GameSystemFacet
-	for _, b := range raw.Aggregations.GameSystems.Buckets {
+	var facets []KeywordFacet
+	for _, b := range raw.Aggregations.FacetValues.Buckets {
 		if b.Key == "" {
 			continue
 		}
-		facets = append(facets, GameSystemFacet{Value: b.Key, Count: b.DocCount})
+		facets = append(facets, KeywordFacet{Value: b.Key, Count: b.DocCount})
 	}
 	return facets, nil
 }
