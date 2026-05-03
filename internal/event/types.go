@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	dateTimeFormat = "01/02/2006 03:04 PM"
-	dateFormat     = "1/2/2006"
+	dateTimeFormat     = "01/02/2006 03:04 PM"
+	dateFormat         = "1/2/2006"
+	lastModifiedFormat = "01-02-06"
 )
 
 // Some interpretted fields are not useful when determining if an event is equal.
@@ -273,6 +274,8 @@ func (e *Event) setTimeFieldFromString(field, value string) error {
 
 	if strings.HasSuffix(field, "date_time") {
 		timeValue, err = time.Parse(dateTimeFormat, value)
+	} else if field == "last_modified" {
+		timeValue, err = time.Parse(lastModifiedFormat, value)
 	} else {
 		timeValue, err = time.Parse(dateFormat, value)
 	}
@@ -286,7 +289,12 @@ func (e *Event) setTimeFieldFromString(field, value string) error {
 		return err
 	}
 
-	timeValue = timeValue.In(indy)
+	// Set the timezone to indy without converting the time
+	timeValue = time.Date(
+		timeValue.Year(), timeValue.Month(), timeValue.Day(),
+		timeValue.Hour(), timeValue.Minute(), timeValue.Second(), timeValue.Nanosecond(),
+		indy,
+	)
 
 	switch field {
 	case "start_date_time":

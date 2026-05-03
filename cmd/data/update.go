@@ -135,6 +135,15 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 			Msg("failed to mark deleted events as deleted")
 	}
 
+	if len(clEntry.CreatedEvents) == 0 && len(clEntry.UpdatedEvents) == 0 && len(clEntry.DeletedEvents) == 0 {
+		gcb.Logger.Info().
+			Str("change_log_entry_id", clEntry.ID).
+			Msg("No events were changed, not creating change log entry")
+
+		// no-op
+		return nil
+	}
+
 	itemErr, err := gcb.ChangeLogRepo.CreateEntries(ctx, clEntry)
 	if err != nil {
 		return fmt.Errorf("failed to call opensearch with a create request: %w", err)

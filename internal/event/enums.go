@@ -56,29 +56,32 @@ const (
 	SEM Type = "SEM - Seminar"
 	ZED Type = "ZED - Isle of Misfit Events"
 	ENT Type = "ENT - Entertainment Events"
-	RPG Type = "RPG - Role Playing Game"
+	RPG Type = "RPG - Roleplaying Game"
 	BGM Type = "BGM - Board Game"
 	CGM Type = "CGM - Non-Collectible / Tradable Card Game"
 	WKS Type = "WKS - Workshop"
 	MHE Type = "MHE - Miniature Hobby Events"
 	LRP Type = "LRP - LARP"
-	TRD Type = "TRD - Trade Day Event"
+	TRD Type = "TRD - Trade Day Events"
 	HMN Type = "HMN - Historical Miniatures"
 	NMN Type = "NMN - Non-Historical Miniatures"
 	TCG Type = "TCG - Tradable Card Game"
-	FLM Type = "FLM - Film Fest"
+	FLM Type = "FLM - Film Festival"
 	KID Type = "KID - Kids Activities"
-	ANI Type = "ANI - Anime Activities"
 	TDA Type = "TDA - True Dungeon Adventures!"
 	SPA Type = "SPA - Supplemental Activities"
 	EGM Type = "EGM - Electronic Games"
+	ESC Type = "ESC - Escape Rooms"
+
+	// Removed in 2026
+	// ANI Type = "ANI - Anime Activities"
 )
 
 // ValidateType validates the incoming string against the defined enum list
 func ValidateType(v string) error {
 	switch Type(v) {
 	case SEM, ZED, ENT, RPG, BGM, CGM, WKS, MHE, LRP,
-		TRD, HMN, NMN, TCG, FLM, KID, ANI, TDA, SPA, EGM:
+		TRD, HMN, NMN, TCG, FLM, KID, TDA, SPA, EGM, ESC:
 		return nil
 	default:
 		return fmt.Errorf("invalid value for Type: %s", v)
@@ -119,14 +122,14 @@ func EventTypeFromSearchTerm(s string) Type {
 		return FLM
 	case "KID":
 		return KID
-	case "ANI":
-		return ANI
 	case "TDA":
 		return TDA
 	case "SPA":
 		return SPA
 	case "EGM":
 		return EGM
+	case "ESC":
+		return ESC
 	default:
 		return Type("invalid")
 	}

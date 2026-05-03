@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/xuri/excelize/v2"
 	"golang.org/x/text/encoding/charmap"
 	"golang.org/x/text/transform"
 )
@@ -57,6 +58,79 @@ var (
 		"original order":     "original_order",
 	}
 )
+
+func LoadEventXLSX(ctx context.Context, filepath string, logger zerolog.Logger) ([]*Event, error) {
+	logger.Info().Msgf("Loading event xlsx %s", filepath)
+	f, err := excelize.OpenFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			logger.Err(err).Msg("Failed to close event xlsx")
+		}
+	}()
+
+	if f.SheetCount > 1 {
+		logger.Warn().Msgf("expecting a single sheet in the event file, but found [%d]. Using the first sheet.", f.SheetCount)
+	}
+
+	sheetName := f.GetSheetName(0)
+	rows, err := f.GetRows(sheetName)
+	if len(rows) < 2 {
+		return nil, fmt.Errorf("Sheet [%s] had less than the expected row count [%d], expect more than 2", sheetName, len(rows))
+	}
+
+	indexToFieldMap := make(map[int]string, len(rows[0]))
+	for index, header := range rows[0] {
+		lcHeader := strings.ToLower(header)
+		if field, ok := headersToFields[lcHeader]; ok {
+			logger.Debug().Msgf("Mapped csv header [%s] to event field [%s]", header, field)
+			indexToFieldMap[index] = field
+		} else {
+			logger.Warn().Msgf("Failed to find an appropriate field for CSV header %s", header)
+		}
+	}
+
+	var (
+		events []*Event
+		row    []string
+		// counts the data validation errors rather than error each time it happens
+		dataErrors = make(map[string]int)
+	)
+
+	for i := 1; i < len(rows); i++ {
+		row = rows[i]
+		newEvent := &Event{}
+		for index, value := range row {
+			if field, ok := indexToFieldMap[index]; !ok {
+				logger.Debug().Msgf("XLSX index %d did not match any field", index)
+			} else {
+				if err := newEvent.SetFieldFromString(field, value); err != nil {
+					// logger.Warn().Str("field", field).Str("value", value).Msg("Validation error")
+					err = fmt.Errorf("validation error for field [%s]: %s", field, err)
+					dataErrors[err.Error()] = dataErrors[err.Error()] + 1
+				}
+			}
+		}
+
+		if newEvent.GameID != "" {
+			events = append(events, newEvent)
+		} else {
+			logger.Warn().Msgf("Invalid event row: %v", row)
+		}
+	}
+
+	for err, count := range dataErrors {
+		logger.Warn().Msgf("Found data validation %d times | %s", count, err)
+	}
+
+	logger.Info().Msgf("Parsed %d valid events from file", len(events))
+
+	return events, nil
+}
 
 func LoadEventCSV(ctx context.Context, filepath string, logger zerolog.Logger) ([]*Event, error) {
 	logger.Info().Msgf("Loading event csv %s", filepath)
