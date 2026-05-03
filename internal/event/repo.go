@@ -288,6 +288,80 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 	}, nil
 }
 
+// GameSystemFacet is a single aggregation bucket from OpenSearch.
+type GameSystemFacet struct {
+	Value string
+	Count int64
+}
+
+func (r *EventRepo) GetGameSystemFacets(ctx context.Context) ([]GameSystemFacet, error) {
+	body := map[string]any{
+		"size": 0,
+		"aggs": map[string]any{
+			"game_systems": map[string]any{
+				"terms": map[string]any{
+					"field": "gameSystem.keyword",
+					"size":  5000,
+					"order": map[string]any{"_key": "asc"},
+				},
+			},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal facet request: %w", err)
+	}
+
+	osReq := opensearchapi.SearchRequest{
+		Index: []string{r.eventIndex},
+		Body:  bytes.NewReader(bodyBytes),
+	}
+
+	osResp, err := osReq.Do(ctx, r.client)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := osResp.Body.Close(); err != nil {
+			r.logger.Err(err).Msg("failed to close facet response body")
+		}
+	}()
+
+	if osResp.IsError() {
+		r.logger.Error().Msgf("facet request failed. Raw response: %s", osResp.String())
+		return nil, fmt.Errorf("failed facet request %d", osResp.StatusCode)
+	}
+
+	var raw struct {
+		Aggregations struct {
+			GameSystems struct {
+				Buckets []struct {
+					Key      string `json:"key"`
+					DocCount int64  `json:"doc_count"`
+				} `json:"buckets"`
+			} `json:"game_systems"`
+		} `json:"aggregations"`
+	}
+
+	buff := bytes.NewBuffer([]byte{})
+	if _, err := buff.ReadFrom(osResp.Body); err != nil {
+		return nil, fmt.Errorf("failed to read facet response body: %w", err)
+	}
+	if err := json.Unmarshal(buff.Bytes(), &raw); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal facet response: %w", err)
+	}
+
+	var facets []GameSystemFacet
+	for _, b := range raw.Aggregations.GameSystems.Buckets {
+		if b.Key == "" {
+			continue
+		}
+		facets = append(facets, GameSystemFacet{Value: b.Key, Count: b.DocCount})
+	}
+	return facets, nil
+}
+
 func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEventsResponse, error) {
 	if len(ids) == 0 {
 		return FetchEventsResponse{

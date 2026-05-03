@@ -47,14 +47,14 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	case SpecialCategory:
 		return search.NewKeywordSingle(f, string(CategoryFromSearchTerm(value)))
 	// Keywords that have no special consideration
-	case GameID, MaterialsRequired, LastChangeLogModification:
+	case GameID, MaterialsRequired, LastChangeLogModification, GameSystem:
 		return search.NewKeyword(f, value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
 		TotalRounds, TicketsAvailable, TotalTickets:
 		return search.NewNumber(f, value)
 	// Generic full text search fields
-	case Group, Title, ShortDescription, LongDescription, GameSystem,
+	case Group, Title, ShortDescription, LongDescription,
 		RulesEdition, MaterialsProvided, MaterialsRequiredDetails, GMNames, Tournament,
 		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)

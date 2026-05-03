@@ -22,6 +22,20 @@ func NewEventManager(logger *zerolog.Logger, repo *event.EventRepo) EventManager
 	}
 }
 
+// GetGameSystemFacets returns all distinct game system values with their event counts.
+func (m EventManager) GetGameSystemFacets(ctx context.Context) ([]gcbapi.GameSystemFacet, error) {
+	facets, err := m.repo.GetGameSystemFacets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]gcbapi.GameSystemFacet, len(facets))
+	for i, f := range facets {
+		result[i] = gcbapi.GameSystemFacet{Value: f.Value, Count: f.Count}
+	}
+	return result, nil
+}
+
 // Search for events given the search request
 func (m EventManager) Search(ctx context.Context, search event.SearchRequest) (int64, []gcbapi.Event, error) {
 	resp, err := m.repo.Search(ctx, search)

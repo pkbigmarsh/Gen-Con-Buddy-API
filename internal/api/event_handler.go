@@ -47,6 +47,10 @@ func (e *EventHandler) Register() {
 		Param(e.ws.QueryParameter("sort", "What field to sert the events on formatted by {field name}.{asc|desc}. Can sort by any field in the event.").
 			DataType("string").DefaultValue("")))
 
+	e.ws.Route(e.ws.GET("/facets/gameSystem").To(e.GameSystemFacets).
+		Doc("Get all distinct game system values with event counts").
+		Writes(gcbapi.GameSystemFacetsResponse{}))
+
 	restful.Add(e.ws)
 }
 
@@ -182,4 +186,27 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK)
+}
+
+// GameSystemFacets handles GET /api/events/facets/gameSystem
+func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Response) {
+	facets, err := e.manager.GetGameSystemFacets(req.Request.Context())
+	if err != nil {
+		e.logger.Err(err).Msg("failed to get game system facets")
+		body, _ := json.Marshal(gcbapi.GameSystemFacetsResponse{Error: "failed to retrieve game system facets"})
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write(body)
+		return
+	}
+
+	body, err := json.Marshal(gcbapi.GameSystemFacetsResponse{Values: facets})
+	if err != nil {
+		e.logger.Err(err).Msg("failed to marshal game system facets response")
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write([]byte(`{"error":"failed to write response"}`))
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+	resp.Write(body)
 }

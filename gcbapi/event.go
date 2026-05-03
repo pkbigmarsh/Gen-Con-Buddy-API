@@ -90,3 +90,15 @@ type EventFetchResponse struct {
 	Events []Event `json:"events,omitempty"`
 	Error  string  `json:"error,omitempty"`
 }
+
+// GameSystemFacet is a single game system value with its event count.
+type GameSystemFacet struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+// GameSystemFacetsResponse is the response for GET /api/events/facets/gameSystem.
+type GameSystemFacetsResponse struct {
+	Values []GameSystemFacet `json:"values,omitempty"`
+	Error  string            `json:"error,omitempty"`
+}
