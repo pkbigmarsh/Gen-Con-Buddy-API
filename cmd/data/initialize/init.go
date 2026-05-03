@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/event"
@@ -79,7 +80,14 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	var evts []*event.Event
 
-	evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)
+	if strings.HasSuffix(filepath, ".csv") {
+		evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)
+	} else if strings.HasSuffix(filepath, ".xlsx") {
+		evts, err = event.LoadEventXLSX(cmd.Context(), filepath, gcb.Logger)
+	} else {
+		return fmt.Errorf("unknown file type in filepath: %s", filepath)
+	}
+
 	if err != nil {
 		return err
 	}
