@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gencon_buddy_api/cmd/app"
@@ -61,7 +62,13 @@ func update(cmd *cobra.Command, _ []string) error {
 	if downloadURL != defaultDownloadURL {
 		events, err = downloadEvents(cmd.Context(), gcb, downloadURL)
 	} else {
-		events, err = event.LoadEventCSV(cmd.Context(), localFilepath, gcb.Logger)
+		if strings.HasSuffix(localFilepath, ".csv") {
+			events, err = event.LoadEventCSV(cmd.Context(), localFilepath, gcb.Logger)
+		} else if strings.HasSuffix(localFilepath, ".xlsx") {
+			events, err = event.LoadEventXLSX(cmd.Context(), localFilepath, gcb.Logger)
+		} else {
+			return fmt.Errorf("unknown file type in filepath: %s", localFilepath)
+		}
 	}
 
 	if err != nil {

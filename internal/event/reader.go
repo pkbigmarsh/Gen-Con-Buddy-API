@@ -63,7 +63,7 @@ func LoadEventXLSX(ctx context.Context, filepath string, logger zerolog.Logger) 
 	logger.Info().Msgf("Loading event xlsx %s", filepath)
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open excel file: %w", err)
 	}
 
 	defer func() {
