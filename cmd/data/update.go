@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wI2L/jsondiff"
+	"github.com/xuri/excelize/v2"
 )
 
 const (
@@ -83,8 +85,29 @@ func update(cmd *cobra.Command, _ []string) error {
 }
 
 func downloadEvents(ctx context.Context, gcb *app.App, downloadURL string) ([]*event.Event, error) {
-	// TODO when the link is available
-	return []*event.Event{}, nil
+	gcb.Logger.Info().Str("url", downloadURL).Msg("Fetching events from download page.")
+
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch from [%s]: %w", downloadURL, err)
+	}
+
+	if resp == nil {
+		return nil, nil
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			gcb.Logger.Err(err).Msg("failed to close the response body")
+		}
+	}()
+
+	f, err := excelize.OpenReader(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response from [%s]: %w", downloadURL, err)
+	}
+
+	return event.ReadEventsFromXLSX(ctx, gcb.Logger, f)
 }
 
 func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*event.Event) error {
@@ -159,6 +182,12 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 	if itemErr != nil {
 		return fmt.Errorf("change log entry [%s] failed to be written: %w", clEntry.ID, errors.Join(itemErr...))
 	}
+
+	gcb.Logger.Info().
+		Int("update_count", len(clEntry.UpdatedEvents)).
+		Int("create_count", len(clEntry.CreatedEvents)).
+		Int("delete_count", len(clEntry.DeletedEvents)).
+		Msgf("Successfully created change log %s", clEntry.ID)
 
 	return nil
 }

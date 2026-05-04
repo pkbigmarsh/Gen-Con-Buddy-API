@@ -73,12 +73,24 @@ func LoadEventXLSX(ctx context.Context, filepath string, logger zerolog.Logger) 
 		}
 	}()
 
+	return ReadEventsFromXLSX(ctx, logger, f)
+}
+
+func ReadEventsFromXLSX(ctx context.Context, logger zerolog.Logger, f *excelize.File) ([]*Event, error) {
+	if f == nil {
+		return []*Event{}, nil
+	}
+
 	if f.SheetCount > 1 {
 		logger.Warn().Msgf("expecting a single sheet in the event file, but found [%d]. Using the first sheet.", f.SheetCount)
 	}
 
 	sheetName := f.GetSheetName(0)
 	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read the rows from the sheet [%s]: %w", sheetName, err)
+	}
+
 	if len(rows) < 2 {
 		return nil, fmt.Errorf("Sheet [%s] had less than the expected row count [%d], expect more than 2", sheetName, len(rows))
 	}
