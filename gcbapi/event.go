@@ -90,3 +90,15 @@ type EventFetchResponse struct {
 	Events []Event `json:"events,omitempty"`
 	Error  string  `json:"error,omitempty"`
 }
+
+// KeywordFacet is a single keyword field value with its event count.
+type KeywordFacet struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+// KeywordFacetsResponse is the response for facet endpoints.
+type KeywordFacetsResponse struct {
+	Values []KeywordFacet `json:"values,omitempty"`
+	Error  string         `json:"error,omitempty"`
+}

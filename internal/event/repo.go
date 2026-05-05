@@ -288,6 +288,83 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 	}, nil
 }
 
+// KeywordFacet is a single aggregation bucket from OpenSearch.
+type KeywordFacet struct {
+	Value string
+	Count int64
+}
+
+// GetKeywordFacets returns distinct values and counts for any keyword (or keyword subfield) in the index.
+// field should be a keyword field or a .keyword subfield (e.g. "gameSystem.keyword").
+// size controls the maximum number of buckets returned.
+func (r *EventRepo) GetKeywordFacets(ctx context.Context, field string, size int) ([]KeywordFacet, error) {
+	body := map[string]any{
+		"size": 0,
+		"aggs": map[string]any{
+			"facet_values": map[string]any{
+				"terms": map[string]any{
+					"field": field,
+					"size":  size,
+					"order": map[string]any{"_key": "asc"},
+				},
+			},
+		},
+	}
+
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal facet request: %w", err)
+	}
+
+	osReq := opensearchapi.SearchRequest{
+		Index: []string{r.eventIndex},
+		Body:  bytes.NewReader(bodyBytes),
+	}
+
+	osResp, err := osReq.Do(ctx, r.client)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := osResp.Body.Close(); err != nil {
+			r.logger.Err(err).Msg("failed to close facet response body")
+		}
+	}()
+
+	if osResp.IsError() {
+		r.logger.Error().Msgf("facet request failed. Raw response: %s", osResp.String())
+		return nil, fmt.Errorf("failed facet request %d", osResp.StatusCode)
+	}
+
+	var raw struct {
+		Aggregations struct {
+			FacetValues struct {
+				Buckets []struct {
+					Key      string `json:"key"`
+					DocCount int64  `json:"doc_count"`
+				} `json:"buckets"`
+			} `json:"facet_values"`
+		} `json:"aggregations"`
+	}
+
+	buff := bytes.NewBuffer([]byte{})
+	if _, err := buff.ReadFrom(osResp.Body); err != nil {
+		return nil, fmt.Errorf("failed to read facet response body: %w", err)
+	}
+	if err := json.Unmarshal(buff.Bytes(), &raw); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal facet response: %w", err)
+	}
+
+	var facets []KeywordFacet
+	for _, b := range raw.Aggregations.FacetValues.Buckets {
+		if b.Key == "" {
+			continue
+		}
+		facets = append(facets, KeywordFacet{Value: b.Key, Count: b.DocCount})
+	}
+	return facets, nil
+}
+
 func (r *EventRepo) FetchEvents(ctx context.Context, ids ...string) (FetchEventsResponse, error) {
 	if len(ids) == 0 {
 		return FetchEventsResponse{
