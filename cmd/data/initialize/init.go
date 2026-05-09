@@ -77,17 +77,15 @@ func run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	var evts []*event.Event
-
-	evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)
+	eventReader, err := event.NewReaderFromPath(gcb.Logger, filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to setup event reader: %w", err)
 	}
+	defer eventReader.Close()
 
-	// When writing the events for the first time, take the `ticketsAvailable`
-	// as the total ticket pool
-	for _, e := range evts {
-		e.TotalTickets = e.TicketsAvailable
+	evts, err := eventReader.ReadEvents(cmd.Context(), event.HydrateTotalTickets{})
+	if err != nil {
+		return fmt.Errorf("failed to read events: %w", err)
 	}
 
 	eventErrs, err := gcb.EventRepo.CreateEvents(cmd.Context(), evts)

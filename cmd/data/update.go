@@ -2,13 +2,13 @@ package data
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"net/http"
 	"time"
 
 	"github.com/gencon_buddy_api/cmd/app"
+	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/gencon_buddy_api/internal/search"
@@ -20,6 +20,7 @@ import (
 
 const (
 	flagDownloadURL = "download_url"
+	flagBGGMapping  = "bgg-mapping"
 	// defaultDownloadURL for the gencon event downloads.
 	// Found on https://www.gencon.com/gen-con-indy/how-to-find-events.
 	defaultDownloadURL = "https://www.gencon.com/downloads/events.zip"
@@ -36,6 +37,7 @@ var (
 
 func init() {
 	UpdateCmd.Flags().String(flagDownloadURL, defaultDownloadURL, "Remote url to download the GenCon events from. Default value is [https://www.gencon.com/downloads/events.zip].")
+	UpdateCmd.Flags().String(flagBGGMapping, "bgg_mapping.json", "path to the BGG mapping file produced by match-bgg")
 	viper.BindPFlag("DOWNLOAD_URL", UpdateCmd.Flags().Lookup(flagDownloadURL))
 }
 
@@ -59,37 +61,36 @@ func update(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to load gcp app context")
 	}
 
-	var events []*event.Event
+	var eventReader event.Reader
 
 	if downloadURL != defaultDownloadURL {
-		events, err = downloadEvents(cmd.Context(), gcb, downloadURL)
+		eventReader, err = setupEventReaderFromDownload(gcb, downloadURL)
 	} else {
-		events, err = event.LoadEventCSV(cmd.Context(), localFilepath, gcb.Logger)
+		eventReader, err = event.NewReaderFromPath(gcb.Logger, localFilepath)
 	}
 
 	if err != nil {
 		gcb.Logger.Err(err).
 			Str("download_url", downloadURL).
 			Str("local_file", localFilepath).
-			Msg("failed to read in the event list for updating")
-		return fmt.Errorf("failed to fetch event list for updating: %w", err)
+			Msg("failed to build event reader")
+		return fmt.Errorf("failed to build event reader: %w", err)
 	}
+	defer eventReader.Close()
 
-	bggMapping := loadBGGMapping(cmd, gcb.Logger)
-	for _, e := range events {
-		if id, ok := bggMapping[e.GameSystem+"|"+e.RulesEdition]; ok {
-			e.BggID = id
-		}
+	bggHydrator := event.NewHydrateBGG(loadBGGMapping(cmd, gcb.Logger))
+	events, err := eventReader.ReadEvents(cmd.Context(), bggHydrator)
+	if err != nil {
+		return fmt.Errorf("failed to read events: %w", err)
 	}
 
 	return processChangeLogEvents(cmd.Context(), gcb, events)
 }
 
-// loadBGGMapping reads the mapping file produced by match-bgg and returns a
-// map keyed by "GameSystem|RulesEdition" → BGG ID string.
-// If the file does not exist, it logs a warning and returns an empty map.
+// loadBGGMapping reads the mapping file produced by match-bgg.
+// If the file is missing or unparseable, it logs a warning and returns an empty map.
 func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]string {
-	path, err := cmd.Flags().GetString("bgg-mapping")
+	path, err := cmd.Flags().GetString(flagBGGMapping)
 	if err != nil {
 		logger.Warn().Err(err).Msg("failed to read bgg-mapping flag; events will have no bggId")
 		return map[string]string{}
@@ -98,34 +99,30 @@ func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]string
 		return map[string]string{}
 	}
 
-	data, err := os.ReadFile(path)
+	m, err := bgg.LoadMapping(path)
 	if err != nil {
-		logger.Warn().Str("path", path).Msg("bgg mapping file not found; events will have no bggId")
+		logger.Warn().Err(err).Str("path", path).Msg("failed to load bgg mapping; events will have no bggId")
 		return map[string]string{}
 	}
 
-	var file struct {
-		Mappings []struct {
-			GameSystem   string `json:"game_system"`
-			RulesEdition string `json:"rules_edition"`
-			BGGID        string `json:"bgg_id"`
-		} `json:"mappings"`
-	}
-	if err := json.Unmarshal(data, &file); err != nil {
-		logger.Warn().Err(err).Str("path", path).Msg("failed to parse bgg mapping file; events will have no bggId")
-		return map[string]string{}
-	}
-
-	m := make(map[string]string, len(file.Mappings))
-	for _, e := range file.Mappings {
-		m[e.GameSystem+"|"+e.RulesEdition] = e.BGGID
-	}
+	logger.Debug().Str("path", path).Int("count", len(m)).Msg("loaded BGG mappings")
 	return m
 }
 
-func downloadEvents(ctx context.Context, gcb *app.App, downloadURL string) ([]*event.Event, error) {
-	// TODO when the link is available
-	return []*event.Event{}, nil
+func setupEventReaderFromDownload(gcb *app.App, downloadURL string) (event.Reader, error) {
+	gcb.Logger.Info().Str("url", downloadURL).Msg("Fetching events from download page.")
+
+	resp, err := http.Get(downloadURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to GET [%s]: %w", downloadURL, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d from [%s]", resp.StatusCode, downloadURL)
+	}
+
+	return event.NewXLSXReaderFromReader(gcb.Logger, resp.Body)
 }
 
 func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*event.Event) error {

@@ -2,6 +2,7 @@ package bgg
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -119,6 +120,34 @@ func LoadGenConCombos(path string) ([]GenConCombo, error) {
 		})
 	}
 	return combos, nil
+}
+
+// LoadMapping reads a bgg_mapping.json produced by match-bgg and returns a
+// map keyed by "GameSystem|RulesEdition" to BGG ID.
+func LoadMapping(path string) (map[string]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var file struct {
+		Mappings []struct {
+			GameSystem   string `json:"game_system"`
+			RulesEdition string `json:"rules_edition"`
+			BGGID        string `json:"bgg_id"`
+		} `json:"mappings"`
+	}
+	if err := json.Unmarshal(data, &file); err != nil {
+		return nil, err
+	}
+	m := make(map[string]string, len(file.Mappings))
+	for _, e := range file.Mappings {
+		m[mappingKey(e.GameSystem, e.RulesEdition)] = e.BGGID
+	}
+	return m, nil
+}
+
+func mappingKey(gameSystem, rulesEdition string) string {
+	return gameSystem + "|" + rulesEdition
 }
 
 func headerIndex(headers []string) map[string]int {
