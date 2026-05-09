@@ -78,24 +78,24 @@ func run(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	var evts []*event.Event
+	var eventReader event.Reader
 
 	if strings.HasSuffix(filepath, ".csv") {
-		evts, err = event.LoadEventCSV(cmd.Context(), filepath, gcb.Logger)
+		eventReader, err = event.NewCSVReader(gcb.Logger, filepath)
 	} else if strings.HasSuffix(filepath, ".xlsx") {
-		evts, err = event.LoadEventXLSX(cmd.Context(), filepath, gcb.Logger)
+		eventReader, err = event.NewXLSXReader(gcb.Logger, event.XLSXFileOptions{Filepath: filepath})
 	} else {
 		return fmt.Errorf("unknown file type in filepath: %s", filepath)
 	}
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to setup event reader: %w", err)
 	}
 
-	// When writing the events for the first time, take the `ticketsAvailable`
-	// as the total ticket pool
-	for _, e := range evts {
-		e.TotalTickets = e.TicketsAvailable
+	// TODO pass along the bgg data hydrator
+	evts, err := eventReader.ReadEvents(cmd.Context(), event.HydrateTotalTickets{})
+	if err != nil {
+		return fmt.Errorf("failed to read events: %w", err)
 	}
 
 	eventErrs, err := gcb.EventRepo.CreateEvents(cmd.Context(), evts)

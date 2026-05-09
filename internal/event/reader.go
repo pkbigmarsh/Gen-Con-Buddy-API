@@ -59,6 +59,203 @@ var (
 	}
 )
 
+// Reader reads in Events
+type Reader interface {
+	// ReadEvents reads all of the events from the reader
+	ReadEvents(context.Context, ...Hydrator) ([]*Event, error)
+	// Close the file used for reading
+	Close() error
+}
+
+// CSVReader reads events from a csv file
+type CSVReader struct {
+	logger    zerolog.Logger
+	parser    Parser
+	file      *os.File
+	csvReader *csv.Reader
+}
+
+// NewCSVReader opens the provided filepath and instantiates an CSVReader
+func NewCSVReader(logger zerolog.Logger, filepath string) (*CSVReader, error) {
+	logger.Info().Msgf("Loading event csv %s", filepath)
+
+	eventFile, err := os.Open(filepath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open csv file: %w", err)
+	}
+
+	eventReader := csv.NewReader(transform.NewReader(eventFile, charmap.Windows1252.NewDecoder()))
+	headers, err := eventReader.Read()
+	if err == io.EOF {
+		return nil, fmt.Errorf("event csv file empty")
+	}
+
+	return &CSVReader{
+		logger:    logger,
+		parser:    NewHeaderedParser(logger, headers),
+		file:      eventFile,
+		csvReader: eventReader,
+	}, nil
+}
+
+// ReadEvents from the csv file
+func (c *CSVReader) ReadEvents(ctx context.Context, hydrators ...Hydrator) ([]*Event, error) {
+	if c.csvReader == nil {
+		return nil, nil
+	}
+
+	var (
+		events = make([]*Event, 0)
+		err    error
+		row    []string
+	)
+
+	for {
+		row, err = c.csvReader.Read()
+		if err != nil {
+			break
+		}
+
+		e, err := c.parser.Parse(row)
+		if err != nil {
+			c.logger.Err(err).Msgf("failed to parse row of csv file")
+			continue
+		}
+
+		for _, h := range hydrators {
+			if err := h.Hydrate(e); err != nil {
+				c.logger.Err(err).
+					Str("hydrator", h.Name()).
+					Msg("failed to hydrate the event")
+			}
+		}
+
+		events = append(events, e)
+	}
+
+	for e, count := range c.parser.DataErrors() {
+		c.logger.Warn().Msgf("Found data validation %d times | %s", count, e)
+	}
+
+	if err != io.EOF {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+// Close the csv file used by the CSVReader
+func (c *CSVReader) Close() error {
+	if c.file != nil {
+		return c.file.Close()
+	}
+
+	return nil
+}
+
+// XLSXReader reads events from an xlsx file
+type XLSXReader struct {
+	logger zerolog.Logger
+	parser Parser
+	rows   *[][]string
+}
+
+// XLSXFileOptions configures the XLSXReader to either use an io.Reader or read directly from a file
+type XLSXFileOptions struct {
+	Filepath string
+	Reader   io.Reader
+}
+
+// NewXLSXReader opens the provided file and validates the headers before it can begin reading
+func NewXLSXReader(logger zerolog.Logger, fileOptions XLSXFileOptions) (*XLSXReader, error) {
+	var (
+		f   *excelize.File
+		err error
+	)
+
+	if fileOptions.Filepath != "" {
+		logger.Info().Msgf("Loading event file %s", fileOptions.Filepath)
+		f, err = excelize.OpenFile(fileOptions.Filepath)
+	} else {
+		logger.Info().Msgf("Loading events from io.reader")
+		f, err = excelize.OpenReader(fileOptions.Reader)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to open excel file: %w", err)
+	}
+
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			logger.Err(err).Msg("Failed to close event xlsx")
+		}
+	}()
+
+	if f.SheetCount > 1 {
+		logger.Warn().Msgf("expecting a single sheet in the event file, but found [%d]. Using the first sheet.", f.SheetCount)
+	}
+
+	sheetName := f.GetSheetName(0)
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read the rows from the sheet [%s]: %w", sheetName, err)
+	}
+
+	if len(rows) <= 1 {
+		return nil, fmt.Errorf("invalid event file, not enough rows: %d", len(rows))
+	}
+
+	return &XLSXReader{
+		logger: logger,
+		parser: NewHeaderedParser(logger, rows[0]),
+		rows:   &rows,
+	}, nil
+}
+
+// ReadEvents from the excel file
+func (x *XLSXReader) ReadEvents(ctx context.Context, hydrators ...Hydrator) ([]*Event, error) {
+	if x.rows == nil {
+		return nil, nil
+	}
+
+	if len(*x.rows) <= 1 {
+		return nil, nil
+	}
+
+	events := make([]*Event, len(*x.rows)-1, 0)
+
+	for i := 1; i < len(*x.rows); i++ {
+		row := (*x.rows)[i]
+		e, err := x.parser.Parse(row)
+		if err != nil {
+			x.logger.Err(err).Msgf("failed to parse row %d of excel file", i)
+			continue
+		}
+
+		for _, h := range hydrators {
+			if err := h.Hydrate(e); err != nil {
+				x.logger.Err(err).
+					Str("hydrator", h.Name()).
+					Msg("failed to hydrate the event")
+			}
+		}
+
+		events = append(events, e)
+	}
+
+	for e, count := range x.parser.DataErrors() {
+		x.logger.Warn().Msgf("Found data validation %d times | %s", count, e)
+	}
+
+	return events, nil
+}
+
+func (x *XLSXReader) Close() error {
+	// XLSReader only uses the file in the constructor, so it closes it then
+	return nil
+}
+
 func LoadEventXLSX(ctx context.Context, filepath string, logger zerolog.Logger) ([]*Event, error) {
 	logger.Info().Msgf("Loading event xlsx %s", filepath)
 	f, err := excelize.OpenFile(filepath)
