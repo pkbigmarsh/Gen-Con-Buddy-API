@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wI2L/jsondiff"
-	"github.com/xuri/excelize/v2"
 )
 
 const (
@@ -59,15 +58,15 @@ func update(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to load gcp app context")
 	}
 
-	var events []*event.Event
+	var eventReader event.Reader
 
 	if downloadURL != defaultDownloadURL {
-		events, err = downloadEvents(cmd.Context(), gcb, downloadURL)
+		eventReader, err = setupEventReaderFromDownload(gcb, downloadURL)
 	} else {
 		if strings.HasSuffix(localFilepath, ".csv") {
-			events, err = event.LoadEventCSV(cmd.Context(), localFilepath, gcb.Logger)
+			eventReader, err = event.NewCSVReader(gcb.Logger, localFilepath)
 		} else if strings.HasSuffix(localFilepath, ".xlsx") {
-			events, err = event.LoadEventXLSX(cmd.Context(), localFilepath, gcb.Logger)
+			eventReader, err = event.NewXLSXReader(gcb.Logger, event.XLSXFileOptions{Filepath: localFilepath})
 		} else {
 			return fmt.Errorf("unknown file type in filepath: %s", localFilepath)
 		}
@@ -77,14 +76,17 @@ func update(cmd *cobra.Command, _ []string) error {
 		gcb.Logger.Err(err).
 			Str("download_url", downloadURL).
 			Str("local_file", localFilepath).
-			Msg("failed to read in the event list for updating")
-		return fmt.Errorf("failed to fetch event list for updating: %w", err)
+			Msg("failed to build event reader")
+		return fmt.Errorf("failed to build event reader: %w", err)
 	}
+
+	// TODO pass in bgg hydrator
+	events, err := eventReader.ReadEvents(cmd.Context())
 
 	return processChangeLogEvents(cmd.Context(), gcb, events)
 }
 
-func downloadEvents(ctx context.Context, gcb *app.App, downloadURL string) ([]*event.Event, error) {
+func setupEventReaderFromDownload(gcb *app.App, downloadURL string) (event.Reader, error) {
 	gcb.Logger.Info().Str("url", downloadURL).Msg("Fetching events from download page.")
 
 	resp, err := http.Get(downloadURL)
@@ -102,12 +104,7 @@ func downloadEvents(ctx context.Context, gcb *app.App, downloadURL string) ([]*e
 		}
 	}()
 
-	f, err := excelize.OpenReader(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response from [%s]: %w", downloadURL, err)
-	}
-
-	return event.ReadEventsFromXLSX(ctx, gcb.Logger, f)
+	return event.NewXLSXReader(gcb.Logger, event.XLSXFileOptions{Reader: resp.Body})
 }
 
 func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*event.Event) error {
@@ -210,6 +207,8 @@ func processChangeLogBatch(ctx context.Context, gcb *app.App, clEntry *changelog
 				Str("change_log_entry_id", clEntry.ID).
 				Msg("Event listed in list to fetch, but not the batch of events provided. Skipping")
 		} else {
+			// New events need their total tickets set to the available count
+			e.TotalTickets = e.TicketsAvailable
 			writeEvents = append(writeEvents, e)
 			clEntry.CreatedEvents = append(clEntry.CreatedEvents, id)
 		}
