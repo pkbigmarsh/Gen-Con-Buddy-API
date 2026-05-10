@@ -10,11 +10,10 @@ import (
 // SearchRequest contains all the needed information for searching
 // for events
 type SearchRequest struct {
-	Terms     []search.Term
-	Page      int
-	Limit     int
-	SortField Field
-	SortDir   string
+	Terms []search.Term
+	Page  int
+	Limit int
+	Sorts []SortEntry
 }
 
 type SearchResponse struct {
@@ -121,6 +120,30 @@ func ParseSort(s string) (Field, string, error) {
 	}
 
 	return field, dir, nil
+}
+
+// SortEntry represents a single field+direction sort pair.
+type SortEntry struct {
+	Field Field
+	Dir   string
+}
+
+// ParseSorts parses a comma-separated list of "{field}.{asc|desc}" sort tokens.
+// Empty tokens are skipped. Returns an error on the first invalid token.
+func ParseSorts(s string) ([]SortEntry, error) {
+	var sorts []SortEntry
+	for _, token := range strings.Split(s, ",") {
+		token = strings.TrimSpace(token)
+		if token == "" {
+			continue
+		}
+		field, dir, err := ParseSort(token)
+		if err != nil {
+			return nil, err
+		}
+		sorts = append(sorts, SortEntry{Field: field, Dir: dir})
+	}
+	return sorts, nil
 }
 
 // FilterTerm is a special [search.Term] implementation for a virtual "filter" field.
