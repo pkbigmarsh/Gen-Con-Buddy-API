@@ -135,8 +135,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				}
 				return
 			}
-
-			sortField, sortDir, err := event.ParseSort(values[0])
+			sorts, err := event.ParseSorts(values[0])
 			if err != nil {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
@@ -145,9 +144,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				}
 				return
 			}
-
-			searchReq.SortField = sortField
-			searchReq.SortDir = sortDir
+			searchReq.Sorts = append(searchReq.Sorts, sorts...)
 		default:
 			// search term?
 			searchTerm, err := event.NewSearchField(queryParam, strings.Join(values, ","))
