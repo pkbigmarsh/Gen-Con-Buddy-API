@@ -77,3 +77,70 @@ func TestParseSort(t *testing.T) {
 		})
 	}
 }
+
+func TestParseSorts(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantSorts []SortEntry
+		wantErr   bool
+	}{
+		{
+			name:      "single field asc",
+			input:     "startDateTime.asc",
+			wantSorts: []SortEntry{{Field: StartDateTime, Dir: "asc"}},
+		},
+		{
+			name:  "two fields",
+			input: "startDateTime.asc,title.desc",
+			wantSorts: []SortEntry{
+				{Field: StartDateTime, Dir: "asc"},
+				{Field: Title, Dir: "desc"},
+			},
+		},
+		{
+			name:  "three fields",
+			input: "cost.asc,title.asc,startDateTime.desc",
+			wantSorts: []SortEntry{
+				{Field: Cost, Dir: "asc"},
+				{Field: Title, Dir: "asc"},
+				{Field: StartDateTime, Dir: "desc"},
+			},
+		},
+		{
+			name:      "empty string returns nil slice",
+			input:     "",
+			wantSorts: nil,
+		},
+		{
+			name:    "invalid field returns error",
+			input:   "startDateTime.asc,bogus.asc",
+			wantErr: true,
+		},
+		{
+			name:    "invalid direction returns error",
+			input:   "startDateTime.up",
+			wantErr: true,
+		},
+		{
+			name:  "whitespace around commas is trimmed",
+			input: "startDateTime.asc , title.desc",
+			wantSorts: []SortEntry{
+				{Field: StartDateTime, Dir: "asc"},
+				{Field: Title, Dir: "desc"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseSorts(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tt.wantSorts, got)
+		})
+	}
+}
