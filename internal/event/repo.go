@@ -203,7 +203,7 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 	}
 	if len(sortEntries) == 0 {
 		sortEntries = []any{
-			map[string]any{"startDateTime": map[string]any{"order": "asc"}},
+			map[string]any{string(StartDateTime): map[string]any{"order": "asc"}},
 		}
 	}
 

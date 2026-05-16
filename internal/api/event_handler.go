@@ -99,7 +99,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid integer for limti: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid integer for limit: %s", err),
 				}
 				return
 			}
@@ -120,7 +120,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid integer for page: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid integer for page: %s", err),
 				}
 				return
 			}
@@ -143,7 +143,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid sort param: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid sort param: %s", err),
 				}
 				return
 			}

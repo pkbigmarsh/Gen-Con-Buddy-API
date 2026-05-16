@@ -93,7 +93,7 @@ func (c *ChangeLogHandler) ListChangeLogs(req *restful.Request, resp *restful.Re
 			i, err := strconv.Atoi(values[0])
 			if err != nil {
 				resp.WriteHeader(http.StatusBadRequest)
-				response.Error = fmt.Errorf("invalid integer for limit: %w", err).Error()
+				response.Error = fmt.Sprintf("invalid integer for limit: %s", err)
 				return
 			}
 
