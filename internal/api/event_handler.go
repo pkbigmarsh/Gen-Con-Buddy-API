@@ -135,9 +135,6 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				}
 				return
 			}
-			if strings.TrimSpace(values[0]) == "" {
-				break
-			}
 			sorts, err := event.ParseSorts(values[0])
 			if err != nil {
 				resp.WriteHeader(http.StatusBadRequest)

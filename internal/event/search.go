@@ -136,12 +136,14 @@ func ParseSorts(s string) ([]SortEntry, error) {
 	for i, token := range tokens {
 		token = strings.TrimSpace(token)
 		if token == "" {
-			return nil, fmt.Errorf("empty sort token at position %d", i+1)
+			return nil, fmt.Errorf("empty sort token at position %d", i)
 		}
+
 		field, dir, err := ParseSort(token)
 		if err != nil {
 			return nil, err
 		}
+
 		sorts = append(sorts, SortEntry{Field: field, Dir: dir})
 	}
 	return sorts, nil
