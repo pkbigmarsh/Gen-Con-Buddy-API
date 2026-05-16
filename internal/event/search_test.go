@@ -113,6 +113,16 @@ func TestParseSorts(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "trailing comma returns error",
+			input:   "startDateTime.asc,",
+			wantErr: true,
+		},
+		{
+			name:    "leading comma returns error",
+			input:   ",startDateTime.asc",
+			wantErr: true,
+		},
+		{
 			name:    "invalid field returns error",
 			input:   "startDateTime.asc,bogus.asc",
 			wantErr: true,

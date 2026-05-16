@@ -131,11 +131,12 @@ type SortEntry struct {
 // ParseSorts parses a comma-separated list of "{field}.{asc|desc}" sort tokens.
 // Returns an error on the first invalid or empty token.
 func ParseSorts(s string) ([]SortEntry, error) {
-	var sorts []SortEntry
-	for _, token := range strings.Split(s, ",") {
+	tokens := strings.Split(s, ",")
+	sorts := make([]SortEntry, 0, len(tokens))
+	for i, token := range tokens {
 		token = strings.TrimSpace(token)
 		if token == "" {
-			return nil, fmt.Errorf("empty sort token")
+			return nil, fmt.Errorf("empty sort token at position %d", i+1)
 		}
 		field, dir, err := ParseSort(token)
 		if err != nil {
