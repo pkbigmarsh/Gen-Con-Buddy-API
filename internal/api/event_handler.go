@@ -44,7 +44,7 @@ func (e *EventHandler) Register() {
 			DataType("int").DefaultValue("100").Minimum(0).Maximum(5000)).
 		Param(e.ws.QueryParameter("page", "What page of events to return. Pages are based on the limit. Default is 0").
 			DataType("int").DefaultValue("0").Minimum(0).Maximum(100)).
-		Param(e.ws.QueryParameter("sort", "What field to sert the events on formatted by {field name}.{asc|desc}. Can sort by any field in the event.").
+		Param(e.ws.QueryParameter("sort", "Sort events by one or more fields as comma-separated {field}.{asc|desc} pairs (e.g., startDateTime.asc,title.desc).").
 			DataType("string").DefaultValue("")))
 
 	e.ws.Route(e.ws.GET("/facets/gameSystem").To(e.GameSystemFacets).
@@ -99,7 +99,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid integer for limti: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid integer for limit: %s", err),
 				}
 				return
 			}
@@ -120,7 +120,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid integer for page: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid integer for page: %s", err),
 				}
 				return
 			}
@@ -135,19 +135,16 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				}
 				return
 			}
-
-			sortField, sortDir, err := event.ParseSort(values[0])
+			sorts, err := event.ParseSorts(values[0])
 			if err != nil {
 				resp.WriteHeader(http.StatusBadRequest)
 				response.Error = &gcbapi.Error{
 					Status: "bad request",
-					Detail: fmt.Errorf("invalid sort param: %w", err).Error(),
+					Detail: fmt.Sprintf("invalid sort param: %s", err),
 				}
 				return
 			}
-
-			searchReq.SortField = sortField
-			searchReq.SortDir = sortDir
+			searchReq.Sorts = sorts
 		default:
 			// search term?
 			searchTerm, err := event.NewSearchField(queryParam, strings.Join(values, ","))

@@ -191,13 +191,19 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		return SearchResponse{}, fmt.Errorf("page must be non negative, got %d", req.Page)
 	}
 
-	sortField := "startDateTime"
-	sortDir := "asc"
-	if req.SortField != "" {
-		sortField = string(req.SortField)
-		sortDir = req.SortDir
-		if _, isText := textSortFields[req.SortField]; isText {
-			sortField = sortField + ".keyword"
+	sortEntries := make([]any, len(req.Sorts))
+	for i, s := range req.Sorts {
+		fieldName := string(s.Field)
+		if _, isText := textSortFields[s.Field]; isText {
+			fieldName = fieldName + ".keyword"
+		}
+		sortEntries[i] = map[string]any{
+			fieldName: map[string]any{"order": s.Dir},
+		}
+	}
+	if len(sortEntries) == 0 {
+		sortEntries = []any{
+			map[string]any{string(StartDateTime): map[string]any{"order": "asc"}},
 		}
 	}
 
@@ -205,11 +211,7 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		"track_total_hits": true,
 		"size":             req.Limit,
 		"from":             req.Limit * req.Page,
-		"sort": []any{
-			map[string]any{
-				sortField: map[string]any{"order": sortDir},
-			},
-		},
+		"sort":             sortEntries,
 	}
 
 	if len(req.Terms) != 0 {
