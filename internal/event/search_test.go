@@ -108,9 +108,9 @@ func TestParseSorts(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty string returns nil slice",
-			input:     "",
-			wantSorts: nil,
+			name:    "empty string returns error",
+			input:   "",
+			wantErr: true,
 		},
 		{
 			name:    "invalid field returns error",

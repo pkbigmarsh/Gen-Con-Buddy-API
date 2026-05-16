@@ -191,15 +191,15 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		return SearchResponse{}, fmt.Errorf("page must be non negative, got %d", req.Page)
 	}
 
-	sortEntries := make([]any, 0, len(req.Sorts))
-	for _, s := range req.Sorts {
+	sortEntries := make([]any, len(req.Sorts))
+	for i, s := range req.Sorts {
 		fieldName := string(s.Field)
 		if _, isText := textSortFields[s.Field]; isText {
 			fieldName = fieldName + ".keyword"
 		}
-		sortEntries = append(sortEntries, map[string]any{
+		sortEntries[i] = map[string]any{
 			fieldName: map[string]any{"order": s.Dir},
-		})
+		}
 	}
 	if len(sortEntries) == 0 {
 		sortEntries = []any{

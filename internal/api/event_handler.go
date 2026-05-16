@@ -144,7 +144,7 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 				}
 				return
 			}
-			searchReq.Sorts = append(searchReq.Sorts, sorts...)
+			searchReq.Sorts = sorts
 		default:
 			// search term?
 			searchTerm, err := event.NewSearchField(queryParam, strings.Join(values, ","))
