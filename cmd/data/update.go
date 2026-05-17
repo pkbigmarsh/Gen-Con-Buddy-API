@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/gencon_buddy_api/cmd/app"
+	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/gencon_buddy_api/internal/search"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/wI2L/jsondiff"
@@ -35,7 +37,9 @@ var (
 
 func init() {
 	UpdateCmd.Flags().String(flagDownloadURL, defaultDownloadURL, "Remote url to download the GenCon events from. Default value is [https://www.gencon.com/downloads/events.zip].")
-	viper.BindPFlag("DOWNLOAD_URL", UpdateCmd.Flags().Lookup(flagDownloadURL))
+	if err := viper.BindPFlag("DOWNLOAD_URL", UpdateCmd.Flags().Lookup(flagDownloadURL)); err != nil {
+		panic(err)
+	}
 }
 
 func update(cmd *cobra.Command, _ []string) error {
@@ -80,8 +84,11 @@ func update(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to build event reader: %w", err)
 	}
 
-	// TODO pass in bgg hydrator
-	events, err := eventReader.ReadEvents(cmd.Context())
+	bggMapping := loadBGGMapping(cmd, gcb.Logger)
+	events, err := eventReader.ReadEvents(cmd.Context(), event.NewHydrateBGG(bggMapping))
+	if err != nil {
+		return fmt.Errorf("failed to read events: %w", err)
+	}
 
 	return processChangeLogEvents(cmd.Context(), gcb, events)
 }
@@ -105,6 +112,29 @@ func setupEventReaderFromDownload(gcb *app.App, downloadURL string) (event.Reade
 	}()
 
 	return event.NewXLSXReader(gcb.Logger, event.XLSXFileOptions{Reader: resp.Body})
+}
+
+// loadBGGMapping reads the mapping file and returns a map keyed by
+// "GameSystem|RulesEdition" → MappingEntry.
+func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]bgg.MappingEntry {
+	path, err := cmd.Flags().GetString(flagBGGMapping)
+	if err != nil {
+		logger.Warn().Err(err).Msg("failed to read --bgg-mapping flag; events will have no bggId")
+		return map[string]bgg.MappingEntry{}
+	}
+
+	if path == "" {
+		logger.Warn().Str("expected_path", "bgg_mapping.json").Msg("--bgg-mapping not set; events will have no bggId")
+		return map[string]bgg.MappingEntry{}
+	}
+
+	mapping, err := bgg.LoadMapping(path)
+	if err != nil {
+		logger.Warn().Err(err).Str("path", path).Msg("failed to load bgg mapping; events will have no bggId")
+		return map[string]bgg.MappingEntry{}
+	}
+
+	return mapping
 }
 
 func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*event.Event) error {

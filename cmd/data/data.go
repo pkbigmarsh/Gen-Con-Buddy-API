@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	cleanFlag    string = "clean"
-	filepathFlag string = "filepath"
+	cleanFlag      string = "clean"
+	filepathFlag   string = "filepath"
+	flagBGGMapping string = "bgg-mapping"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 func init() {
 	Cmd.PersistentFlags().BoolP(cleanFlag, "c", false, "cleans all indicies before initilizing the data")
 	Cmd.PersistentFlags().StringP(filepathFlag, "f", "", "the filepath of the csv event data to load")
+	Cmd.PersistentFlags().String(flagBGGMapping, "", "path to bgg_mapping.json produced by match-bgg")
 
 	Cmd.AddCommand(initialize.InitCmd)
 	Cmd.AddCommand(UpdateCmd)
