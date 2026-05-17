@@ -11,6 +11,15 @@
             "gameId": {
                 "type": "keyword"
             },
+            "bggId": {
+                "type": "keyword"
+            },
+            "bggRank": {
+                "type": "integer"
+            },
+            "bggAvgRating": {
+                "type": "double"
+            },
             "year": {
                 "type": "integer"
             },

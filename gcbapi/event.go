@@ -14,6 +14,9 @@ type Event struct {
 // EventAttributes wrap the JSONAPI spec attributes for the Event
 type EventAttributes struct {
 	GameID                   string    `json:"gameId"`
+	BggID                    string    `json:"bggId"`
+	BggRank                  int       `json:"bggRank,omitempty"`
+	BggAvgRating             float64   `json:"bggAvgRating,omitempty"`
 	Year                     int64     `json:"year"`
 	Group                    string    `json:"group"`
 	Title                    string    `json:"title"`

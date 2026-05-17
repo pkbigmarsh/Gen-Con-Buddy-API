@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gencon_buddy_api/cmd/app"
+	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
 	"github.com/spf13/cobra"
@@ -92,8 +93,14 @@ func run(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to setup event reader: %w", err)
 	}
 
-	// TODO pass along the bgg data hydrator
-	evts, err := eventReader.ReadEvents(cmd.Context(), event.HydrateTotalTickets{})
+	bggMappingPath, _ := cmd.Flags().GetString("bgg-mapping")
+	bggMapping, err := bgg.LoadMapping(bggMappingPath)
+	if err != nil {
+		gcb.Logger.Warn().Err(err).Str("path", bggMappingPath).Msg("failed to load bgg mapping; events will have no bggId")
+		bggMapping = map[string]bgg.MappingEntry{}
+	}
+
+	evts, err := eventReader.ReadEvents(cmd.Context(), event.HydrateTotalTickets{}, event.NewHydrateBGG(bggMapping))
 	if err != nil {
 		return fmt.Errorf("failed to read events: %w", err)
 	}
