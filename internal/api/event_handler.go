@@ -47,9 +47,11 @@ func (e *EventHandler) Register() {
 		Param(e.ws.QueryParameter("sort", "Sort events by one or more fields as comma-separated {field}.{asc|desc} pairs (e.g., startDateTime.asc,title.desc).").
 			DataType("string").DefaultValue("")))
 
-	e.ws.Route(e.ws.GET("/facets/gameSystem").To(e.GameSystemFacets).
-		Doc("Get all distinct game system values with event counts").
+	e.ws.Route(e.ws.GET("/facets/{field}").To(e.Facets).
+		Doc("Get all distinct values with event counts for a supported keyword field").
 		Writes(gcbapi.KeywordFacetsResponse{}).
+		Param(e.ws.PathParameter("field", "The field to facet on. Supported fields: gameSystem, group, location, roomName.").
+			DataType("string")).
 		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
 			DataType("int").DefaultValue("100")))
 
@@ -187,10 +189,32 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 	resp.WriteHeader(http.StatusOK)
 }
 
-// GameSystemFacets handles GET /api/events/facets/gameSystem
-func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Response) {
+// facetFields maps supported facet field names to their OpenSearch field.
+// Text fields with a .keyword subfield use the subfield for exact aggregation;
+// enum fields are stored as keyword type and are queried directly.
+var facetFields = map[string]string{
+	"gameSystem":           "gameSystem.keyword",
+	"group":                "group.keyword",
+	"location":             "location.keyword",
+	"roomName":             "roomName.keyword",
+	"ageRequired":          "ageRequired",
+	"experienceRequired":   "experienceRequired",
+	"attendeeRegistration": "attendeeRegistration",
+	"specialCategory":      "specialCategory",
+}
+
+// Facets handles GET /api/events/facets/{field}
+func (e *EventHandler) Facets(req *restful.Request, resp *restful.Response) {
 	const maxSize = 5000
 	size := 100
+
+	fieldParam := req.PathParameter("field")
+	osField, ok := facetFields[fieldParam]
+	if !ok {
+		resp.WriteHeader(http.StatusNotFound)
+		resp.Write([]byte(`{"error":"unsupported facet field"}`))
+		return
+	}
 
 	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
 		parsed, err := strconv.Atoi(sizeParam)
@@ -207,10 +231,10 @@ func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Resp
 		size = parsed
 	}
 
-	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "gameSystem.keyword", size)
+	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), osField, size)
 	if err != nil {
-		e.logger.Err(err).Msg("failed to get game system facets")
-		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve game system facets"})
+		e.logger.Err(err).Msgf("failed to get %s facets", fieldParam)
+		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: fmt.Sprintf("failed to retrieve %s facets", fieldParam)})
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write(body)
 		return
@@ -218,7 +242,7 @@ func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Resp
 
 	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
 	if err != nil {
-		e.logger.Err(err).Msg("failed to marshal game system facets response")
+		e.logger.Err(err).Msgf("failed to marshal %s facets response", fieldParam)
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error":"failed to write response"}`))
 		return
