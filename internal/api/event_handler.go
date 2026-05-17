@@ -189,12 +189,18 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 	resp.WriteHeader(http.StatusOK)
 }
 
-// facetFields maps supported facet field names to their OpenSearch keyword subfield.
+// facetFields maps supported facet field names to their OpenSearch field.
+// Text fields with a .keyword subfield use the subfield for exact aggregation;
+// enum fields are stored as keyword type and are queried directly.
 var facetFields = map[string]string{
-	"gameSystem": "gameSystem.keyword",
-	"group":      "group.keyword",
-	"location":   "location.keyword",
-	"roomName":   "roomName.keyword",
+	"gameSystem":           "gameSystem.keyword",
+	"group":                "group.keyword",
+	"location":             "location.keyword",
+	"roomName":             "roomName.keyword",
+	"ageRequired":          "ageRequired",
+	"experienceRequired":   "experienceRequired",
+	"attendeeRegistration": "attendeeRegistration",
+	"specialCategory":      "specialCategory",
 }
 
 // Facets handles GET /api/events/facets/{field}
