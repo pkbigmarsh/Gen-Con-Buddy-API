@@ -28,6 +28,8 @@ func NewSearchField(f string, value string) (search.Term, error) {
 		return nil, err
 	}
 
+	value = strings.TrimSpace(value)
+
 	switch field {
 	// keywords that are specific enum types
 	case AgeRequired:
@@ -150,21 +152,52 @@ func ParseSorts(s string) ([]SortEntry, error) {
 }
 
 // FilterTerm is a special [search.Term] implementation for a virtual "filter" field.
-// This search matches against title, short description, and long description.
+// This search matches against the following fields:
+//   - Title
+//   - Game System
+//   - Short Description
+//   - Long Description
+//   - Group
 type FilterTerm struct {
 	value string
 }
 
 func (f FilterTerm) ToQuery() (any, error) {
+	inFixValue := fmt.Sprintf("*%s*", f.value)
 	return map[string]any{
-		"multi_match": map[string]any{
-			"query": f.value,
-			"fields": []string{
-				string(Title) + "^6", // 6 is 2 x the weight of short + long
-				string(ShortDescription) + "^2",
-				string(LongDescription),
+		"bool": map[string]any{
+			"should": []map[string]any{
+				{
+					"multi_match": map[string]any{
+						"query": f.value,
+						"fields": []string{
+							string(Title) + "^6", // 6 is 2 x the weight of short + long
+							string(ShortDescription) + "^2",
+							string(LongDescription),
+							string(GameSystem),
+							string(Group),
+						},
+						"operator": "and",
+					},
+				},
+				{
+					"wildcard": map[string]any{
+						string(Title): map[string]any{
+							"value":            inFixValue,
+							"case_insensitive": true,
+						},
+					},
+				},
+				{
+					"wildcard": map[string]any{
+						string(GameSystem): map[string]any{
+							"value":            inFixValue,
+							"case_insensitive": true,
+						},
+					},
+				},
 			},
-			"operator": "and",
+			"minimum_should_match": 1,
 		},
 	}, nil
 }
