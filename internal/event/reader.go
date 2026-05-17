@@ -223,7 +223,7 @@ func (x *XLSXReader) ReadEvents(ctx context.Context, hydrators ...Hydrator) ([]*
 		return nil, nil
 	}
 
-	events := make([]*Event, len(*x.rows)-1, 0)
+	events := make([]*Event, 0, len(*x.rows))
 
 	for i := 1; i < len(*x.rows); i++ {
 		row := (*x.rows)[i]
