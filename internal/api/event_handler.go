@@ -47,27 +47,11 @@ func (e *EventHandler) Register() {
 		Param(e.ws.QueryParameter("sort", "Sort events by one or more fields as comma-separated {field}.{asc|desc} pairs (e.g., startDateTime.asc,title.desc).").
 			DataType("string").DefaultValue("")))
 
-	e.ws.Route(e.ws.GET("/facets/gameSystem").To(e.GameSystemFacets).
-		Doc("Get all distinct game system values with event counts").
+	e.ws.Route(e.ws.GET("/facets/{field}").To(e.Facets).
+		Doc("Get all distinct values with event counts for a supported keyword field").
 		Writes(gcbapi.KeywordFacetsResponse{}).
-		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
-			DataType("int").DefaultValue("100")))
-
-	e.ws.Route(e.ws.GET("/facets/group").To(e.GroupFacets).
-		Doc("Get all distinct group values with event counts").
-		Writes(gcbapi.KeywordFacetsResponse{}).
-		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
-			DataType("int").DefaultValue("100")))
-
-	e.ws.Route(e.ws.GET("/facets/location").To(e.LocationFacets).
-		Doc("Get all distinct location values with event counts").
-		Writes(gcbapi.KeywordFacetsResponse{}).
-		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
-			DataType("int").DefaultValue("100")))
-
-	e.ws.Route(e.ws.GET("/facets/roomName").To(e.RoomNameFacets).
-		Doc("Get all distinct room name values with event counts").
-		Writes(gcbapi.KeywordFacetsResponse{}).
+		Param(e.ws.PathParameter("field", "The field to facet on. Supported fields: gameSystem, group, location, roomName.").
+			DataType("string")).
 		Param(e.ws.QueryParameter("size", "Maximum number of values to return. Default is 100, max is 5000.").
 			DataType("int").DefaultValue("100")))
 
@@ -205,51 +189,26 @@ func (e *EventHandler) Search(req *restful.Request, resp *restful.Response) {
 	resp.WriteHeader(http.StatusOK)
 }
 
-// GroupFacets handles GET /api/events/facets/group
-func (e *EventHandler) GroupFacets(req *restful.Request, resp *restful.Response) {
-	const maxSize = 5000
-	size := 100
-
-	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
-		parsed, err := strconv.Atoi(sizeParam)
-		if err != nil || parsed < 1 {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size must be a positive integer"}`))
-			return
-		}
-		if parsed > maxSize {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size cannot exceed 5000"}`))
-			return
-		}
-		size = parsed
-	}
-
-	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "group.keyword", size)
-	if err != nil {
-		e.logger.Err(err).Msg("failed to get group facets")
-		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve group facets"})
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write(body)
-		return
-	}
-
-	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
-	if err != nil {
-		e.logger.Err(err).Msg("failed to marshal group facets response")
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error":"failed to write response"}`))
-		return
-	}
-
-	resp.WriteHeader(http.StatusOK)
-	resp.Write(body)
+// facetFields maps supported facet field names to their OpenSearch keyword subfield.
+var facetFields = map[string]string{
+	"gameSystem": "gameSystem.keyword",
+	"group":      "group.keyword",
+	"location":   "location.keyword",
+	"roomName":   "roomName.keyword",
 }
 
-// LocationFacets handles GET /api/events/facets/location
-func (e *EventHandler) LocationFacets(req *restful.Request, resp *restful.Response) {
+// Facets handles GET /api/events/facets/{field}
+func (e *EventHandler) Facets(req *restful.Request, resp *restful.Response) {
 	const maxSize = 5000
 	size := 100
+
+	fieldParam := req.PathParameter("field")
+	osField, ok := facetFields[fieldParam]
+	if !ok {
+		resp.WriteHeader(http.StatusNotFound)
+		resp.Write([]byte(`{"error":"unsupported facet field"}`))
+		return
+	}
 
 	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
 		parsed, err := strconv.Atoi(sizeParam)
@@ -266,10 +225,10 @@ func (e *EventHandler) LocationFacets(req *restful.Request, resp *restful.Respon
 		size = parsed
 	}
 
-	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "location.keyword", size)
+	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), osField, size)
 	if err != nil {
-		e.logger.Err(err).Msg("failed to get location facets")
-		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve location facets"})
+		e.logger.Err(err).Msgf("failed to get %s facets", fieldParam)
+		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: fmt.Sprintf("failed to retrieve %s facets", fieldParam)})
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write(body)
 		return
@@ -277,89 +236,7 @@ func (e *EventHandler) LocationFacets(req *restful.Request, resp *restful.Respon
 
 	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
 	if err != nil {
-		e.logger.Err(err).Msg("failed to marshal location facets response")
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error":"failed to write response"}`))
-		return
-	}
-
-	resp.WriteHeader(http.StatusOK)
-	resp.Write(body)
-}
-
-// RoomNameFacets handles GET /api/events/facets/roomName
-func (e *EventHandler) RoomNameFacets(req *restful.Request, resp *restful.Response) {
-	const maxSize = 5000
-	size := 100
-
-	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
-		parsed, err := strconv.Atoi(sizeParam)
-		if err != nil || parsed < 1 {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size must be a positive integer"}`))
-			return
-		}
-		if parsed > maxSize {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size cannot exceed 5000"}`))
-			return
-		}
-		size = parsed
-	}
-
-	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "roomName.keyword", size)
-	if err != nil {
-		e.logger.Err(err).Msg("failed to get room name facets")
-		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve room name facets"})
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write(body)
-		return
-	}
-
-	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
-	if err != nil {
-		e.logger.Err(err).Msg("failed to marshal room name facets response")
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error":"failed to write response"}`))
-		return
-	}
-
-	resp.WriteHeader(http.StatusOK)
-	resp.Write(body)
-}
-
-// GameSystemFacets handles GET /api/events/facets/gameSystem
-func (e *EventHandler) GameSystemFacets(req *restful.Request, resp *restful.Response) {
-	const maxSize = 5000
-	size := 100
-
-	if sizeParam := req.QueryParameter("size"); sizeParam != "" {
-		parsed, err := strconv.Atoi(sizeParam)
-		if err != nil || parsed < 1 {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size must be a positive integer"}`))
-			return
-		}
-		if parsed > maxSize {
-			resp.WriteHeader(http.StatusBadRequest)
-			resp.Write([]byte(`{"error":"size cannot exceed 5000"}`))
-			return
-		}
-		size = parsed
-	}
-
-	facets, err := e.manager.GetKeywordFacets(req.Request.Context(), "gameSystem.keyword", size)
-	if err != nil {
-		e.logger.Err(err).Msg("failed to get game system facets")
-		body, _ := json.Marshal(gcbapi.KeywordFacetsResponse{Error: "failed to retrieve game system facets"})
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write(body)
-		return
-	}
-
-	body, err := json.Marshal(gcbapi.KeywordFacetsResponse{Values: facets})
-	if err != nil {
-		e.logger.Err(err).Msg("failed to marshal game system facets response")
+		e.logger.Err(err).Msgf("failed to marshal %s facets response", fieldParam)
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error":"failed to write response"}`))
 		return

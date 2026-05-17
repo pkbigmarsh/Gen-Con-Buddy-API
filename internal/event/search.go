@@ -48,17 +48,17 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	// Keywords that have no special consideration
 	case GameID, MaterialsRequired, LastChangeLogModification:
 		return search.NewKeyword(f, value)
-	// GameSystem, Group, Location, and RoomName are text fields with .keyword subfields; exact match requires the subfield
-	case GameSystem, Group, Location, RoomName:
+	// GameSystem is a text field with a .keyword subfield; exact match requires the subfield
+	case GameSystem:
 		return search.NewKeyword(f+".keyword", value)
 	// integer
 	case Year, MinPlayers, MaxPlayers, RoundNumber,
 		TotalRounds, TicketsAvailable, TotalTickets:
 		return search.NewNumber(f, value)
 	// Generic full text search fields
-	case Title, ShortDescription, LongDescription,
+	case Group, Title, ShortDescription, LongDescription,
 		RulesEdition, MaterialsProvided, MaterialsRequiredDetails, GMNames, Tournament,
-		TableNumber, Prize, RulesComplexity:
+		Location, RoomName, TableNumber, Prize, RulesComplexity:
 		return search.NewText(f, value)
 	// Full text search fields that have a subfield as well
 	case Email, Website:
