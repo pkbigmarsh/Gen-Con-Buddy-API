@@ -53,7 +53,7 @@ func (h *HeaderParser) Parse(fields []string) (*Event, error) {
 		if field, ok := h.indexToFieldMap[index]; !ok {
 			h.logger.Debug().Msgf("XLSX index %d did not match any field", index)
 		} else {
-			if err := newEvent.SetFieldFromString(field, value); err != nil {
+			if err := newEvent.SetFieldFromString(field, strings.TrimSpace(value)); err != nil {
 				// logger.Warn().Str("field", field).Str("value", value).Msg("Validation error")
 				err = fmt.Errorf("validation error for field [%s]: %s", field, err)
 				h.dataErrors[err.Error()] = h.dataErrors[err.Error()] + 1

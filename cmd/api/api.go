@@ -54,9 +54,6 @@ func run(cmd *cobra.Command, _ []string) error {
 
 	apiService.Start()
 
-	for range mainCtx.Done() {
-		return nil
-	}
-
+	<-mainCtx.Done()
 	return nil
 }
