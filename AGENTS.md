@@ -13,6 +13,14 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 go install golang.org/x/tools/cmd/goimports@latest
 ```
 
+## Staying current
+
+This repo has multiple active contributors. Always rebase on `origin/main` before starting work and before opening a PR:
+
+```bash
+git fetch origin && git rebase origin/main
+```
+
 ## Build & test
 
 ```bash
