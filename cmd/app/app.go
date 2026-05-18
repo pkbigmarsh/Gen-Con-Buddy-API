@@ -5,10 +5,11 @@ import (
 	"crypto/tls"
 	"net/http"
 
-	"github.com/gencon_buddy_api/internal/changelog"
-	"github.com/gencon_buddy_api/internal/event"
 	"github.com/opensearch-project/opensearch-go/v2"
 	"github.com/rs/zerolog"
+
+	"github.com/gencon_buddy_api/internal/changelog"
+	"github.com/gencon_buddy_api/internal/event"
 )
 
 type appContextKey uint

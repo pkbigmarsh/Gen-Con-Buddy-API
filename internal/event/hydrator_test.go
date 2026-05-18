@@ -3,8 +3,9 @@ package event
 import (
 	"testing"
 
-	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gencon_buddy_api/internal/bgg"
 )
 
 func TestHydrateBGG_Hit(t *testing.T) {

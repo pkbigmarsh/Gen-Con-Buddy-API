@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "▶ pre-push: running tests"
+go test ./...
+echo "✓ all tests passed"

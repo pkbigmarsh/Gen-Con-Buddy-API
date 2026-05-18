@@ -5,12 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/gencon_buddy_api/cmd/api"
-	"github.com/gencon_buddy_api/cmd/app"
-	"github.com/gencon_buddy_api/cmd/data"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/gencon_buddy_api/cmd/api"
+	"github.com/gencon_buddy_api/cmd/app"
+	"github.com/gencon_buddy_api/cmd/data"
 )
 
 const (

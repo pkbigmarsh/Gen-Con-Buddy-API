@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 
+	"github.com/rs/zerolog"
+
 	"github.com/gencon_buddy_api/gcbapi"
 	"github.com/gencon_buddy_api/internal/event"
-	"github.com/rs/zerolog"
 )
 
 // EventManager handles the inbetween of internal event interactions and external event shapes
