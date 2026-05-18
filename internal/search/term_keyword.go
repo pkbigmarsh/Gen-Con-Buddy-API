@@ -42,6 +42,24 @@ func NewKeyword(field, vals string) (Keyword, error) {
 	return keyword, nil
 }
 
+// NewKeywordSlice creates a terms query from a pre-split slice of values.
+// Use this instead of NewKeyword when values may themselves contain commas.
+func NewKeywordSlice(field string, vals []string) (Keyword, error) {
+	keyword := Keyword{}
+	if field == "" {
+		return keyword, fmt.Errorf("cannot create a keyword term without a field")
+	}
+
+	if len(vals) == 0 {
+		return keyword, fmt.Errorf("cannot create a keyword term on %s without fields", field)
+	}
+
+	keyword.field = field
+	keyword.values = vals
+
+	return keyword, nil
+}
+
 func (k Keyword) ToQuery() (any, error) {
 	if k.field == "" {
 		return nil, fmt.Errorf("cannot create a keyword query without a field")
