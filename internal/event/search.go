@@ -33,20 +33,40 @@ func NewSearchField(f string, value string) (search.Term, error) {
 	switch field {
 	// keywords that are specific enum types
 	case AgeRequired:
-		return search.NewKeywordSingle(f, string(AgeGroupFromSearchTerm(value)))
+		parts := strings.Split(value, ",")
+		converted := make([]string, len(parts))
+		for i, p := range parts {
+			converted[i] = string(AgeGroupFromSearchTerm(p))
+		}
+		return search.NewKeywordSlice(f, converted)
 	case EventType:
 		parts := strings.Split(value, ",")
 		converted := make([]string, len(parts))
 		for i, p := range parts {
 			converted[i] = string(EventTypeFromSearchTerm(p))
 		}
-		return search.NewKeyword(f, strings.Join(converted, ","))
+		return search.NewKeywordSlice(f, converted)
 	case ExperienceRequired:
-		return search.NewKeywordSingle(f, string(EXPFromSearchTerm(value)))
+		parts := strings.Split(value, ",")
+		converted := make([]string, len(parts))
+		for i, p := range parts {
+			converted[i] = string(EXPFromSearchTerm(p))
+		}
+		return search.NewKeywordSlice(f, converted)
 	case AttendeeRegistration:
-		return search.NewKeywordSingle(f, string(RegistrationFromSearchTerm(value)))
+		parts := strings.Split(value, ",")
+		converted := make([]string, len(parts))
+		for i, p := range parts {
+			converted[i] = string(RegistrationFromSearchTerm(p))
+		}
+		return search.NewKeywordSlice(f, converted)
 	case SpecialCategory:
-		return search.NewKeywordSingle(f, string(CategoryFromSearchTerm(value)))
+		parts := strings.Split(value, ",")
+		converted := make([]string, len(parts))
+		for i, p := range parts {
+			converted[i] = string(CategoryFromSearchTerm(p))
+		}
+		return search.NewKeywordSlice(f, converted)
 	// Keywords that have no special consideration
 	case GameID, MaterialsRequired, LastChangeLogModification:
 		return search.NewKeyword(f, value)
