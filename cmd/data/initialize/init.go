@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+	"github.com/spf13/cobra"
+
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/event"
-	"github.com/opensearch-project/opensearch-go/v2/opensearchapi"
-	"github.com/spf13/cobra"
 )
 
 var (

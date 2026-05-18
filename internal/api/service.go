@@ -8,10 +8,11 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
-	"github.com/gencon_buddy_api/internal/changelog"
-	"github.com/gencon_buddy_api/internal/event"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog"
+
+	"github.com/gencon_buddy_api/internal/changelog"
+	"github.com/gencon_buddy_api/internal/event"
 )
 
 type GenconBuddyAPI struct {

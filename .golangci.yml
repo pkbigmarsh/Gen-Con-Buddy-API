@@ -1,0 +1,30 @@
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - gofmt
+    - goimports
+    - prealloc
+    - errcheck
+    - staticcheck
+    - unused
+
+linters-settings:
+  goimports:
+    local-prefixes: github.com/gencon_buddy_api
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    # viper.BindPFlag never returns a meaningful error for valid flag names
+    - linters: [errcheck]
+      text: "viper.BindPFlag"
+    # HTTP response write errors cannot be usefully recovered from
+    - linters: [errcheck]
+      text: "resp\\.Write"
+    - linters: [errcheck]
+      text: "resp\\.WriteErrorString"
+    # Service stop errors on shutdown are intentionally fire-and-forget
+    - linters: [errcheck]
+      text: "apiService\\.Stop"
