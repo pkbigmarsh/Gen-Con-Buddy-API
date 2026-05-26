@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rs/zerolog"
+
 	"github.com/gencon_buddy_api/gcbapi"
 	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
-	"github.com/rs/zerolog"
 )
 
 // ChangeLogManger handles the inbetween of internal change log entries

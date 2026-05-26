@@ -128,7 +128,7 @@ func LoadGenConCombos(path string) ([]GenConCombo, error) {
 		titleCounts[key][csvField(row, idx, "Title")]++
 	}
 
-	var combos []GenConCombo
+	combos := make([]GenConCombo, 0, len(titleCounts))
 	for key, titles := range titleCounts {
 		total := 0
 		for _, n := range titles {

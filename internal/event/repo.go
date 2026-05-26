@@ -268,7 +268,6 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 
 	var (
 		response eventSearchResponse
-		events   []*Event
 		buff     = bytes.NewBuffer([]byte{})
 	)
 
@@ -280,8 +279,9 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		return SearchResponse{}, fmt.Errorf("failed to unmarshal search response: %w", err)
 	}
 
-	for _, e := range response.Hits.Hits {
-		events = append(events, e.Event)
+	events := make([]*Event, len(response.Hits.Hits))
+	for i, e := range response.Hits.Hits {
+		events[i] = e.Event
 	}
 
 	return SearchResponse{
@@ -357,7 +357,7 @@ func (r *EventRepo) GetKeywordFacets(ctx context.Context, field string, size int
 		return nil, fmt.Errorf("failed to unmarshal facet response: %w", err)
 	}
 
-	var facets []KeywordFacet
+	facets := make([]KeywordFacet, 0, len(raw.Aggregations.FacetValues.Buckets))
 	for _, b := range raw.Aggregations.FacetValues.Buckets {
 		if b.Key == "" {
 			continue

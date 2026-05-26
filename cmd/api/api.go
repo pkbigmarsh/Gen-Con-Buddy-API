@@ -7,10 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gencon_buddy_api/cmd/app"
-	"github.com/gencon_buddy_api/internal/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/gencon_buddy_api/cmd/app"
+	"github.com/gencon_buddy_api/internal/api"
 )
 
 const (
