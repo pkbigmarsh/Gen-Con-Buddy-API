@@ -24,7 +24,7 @@ The version or edition of the GameSystem (e.g. "5th Edition"). Paired with GameS
 The organization or publisher hosting the Event at Gen Con.
 
 **SpecialCategory**:
-A Gen Con-assigned classification (`Gen Con Presents` or `Premier Event`). Meaning is defined by Gen Con; treat as an opaque label from the source data.
+A Gen Con-assigned classification. The only value currently in use is `Gen Con Presents`. Meaning is defined by Gen Con; treat as an opaque label from the source data.
 
 ### Ticketing
 
@@ -86,12 +86,6 @@ The primary consumer is **Gen Con Buddy** (`github.com/myasonik/Gen-Con-Buddy`),
 
 - **"Game" vs "Event"**: resolved — **Event** is canonical. "Game" appears in source-data field names (`gameId`, `gameSystem`) and Gen Con's own exports; don't use it in new code or domain language.
 - **GameSystem vs title**: `GameSystem` is the rules framework, not the event's name. There is no single canonical title field for the game being played — `Title` is the closest but is freeform.
-
-## Open questions
-
-These came up during domain modelling and were not resolved. Revisit when someone has access to Gen Con's official documentation or a knowledgeable attendee.
-
-- **SpecialCategory**: What do "Gen Con Presents" and "Premier Event" mean to attendees in practice? What distinguishes the two?
 
 ## Deprecated fields
 
