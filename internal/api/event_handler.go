@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
+	"github.com/rs/zerolog"
+
 	"github.com/gencon_buddy_api/gcbapi"
 	"github.com/gencon_buddy_api/internal/event"
-	"github.com/rs/zerolog"
 )
 
 // EventHandler is the API Handler for all /api/events/* endpoints.

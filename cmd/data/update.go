@@ -8,15 +8,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/wI2L/jsondiff"
+
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/changelog"
 	"github.com/gencon_buddy_api/internal/event"
 	"github.com/gencon_buddy_api/internal/search"
-	"github.com/rs/zerolog"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/wI2L/jsondiff"
 )
 
 const (
@@ -147,10 +148,10 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 		Msg("Creating new change log entry")
 
 	var (
-		count     = 0
-		fetchList []string
-		batchMap  = make(map[string]*event.Event)
+		count    = 0
+		batchMap = make(map[string]*event.Event)
 	)
+	fetchList := make([]string, 0, gcb.BatchSize)
 
 	for _, e := range eventList {
 		e.LastChangeLogModification = clEntry.ID
@@ -167,7 +168,7 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 			}
 
 			count = 0
-			fetchList = []string{}
+			fetchList = make([]string, 0, gcb.BatchSize)
 			batchMap = make(map[string]*event.Event)
 		}
 	}
@@ -220,15 +221,13 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 }
 
 func processChangeLogBatch(ctx context.Context, gcb *app.App, clEntry *changelog.Entry, eventIds []string, eventBatch map[string]*event.Event) error {
-	var (
-		writeEvents  []*event.Event
-		updateEvents []*event.Event
-	)
-
 	fetchedEvents, err := gcb.EventRepo.FetchEvents(ctx, eventIds...)
 	if err != nil {
 		return err
 	}
+
+	writeEvents := make([]*event.Event, 0, len(fetchedEvents.Missing))
+	updateEvents := make([]*event.Event, 0, len(fetchedEvents.Found))
 
 	for id := range fetchedEvents.Missing {
 		if e, ok := eventBatch[id]; !ok {
@@ -325,10 +324,8 @@ func processChangeLogDeletions(ctx context.Context, gcb *app.App, clEntry *chang
 		Limit: 1000,
 	}
 
-	var (
-		results      event.SearchResponse
-		deleteEvents []*event.Event
-	)
+	var results event.SearchResponse
+	deleteEvents := make([]*event.Event, 0, 1000) // matches search page Limit above
 
 	results, err = gcb.EventRepo.Search(Cmd.Context(), deletedEventsSearchRequest)
 

@@ -212,7 +212,6 @@ func (r *Repo) List(ctx context.Context, req ListEntriesRequest) ([]*Entry, erro
 
 	var (
 		response entriesearchResponse
-		entries  []*Entry
 		buff     = bytes.NewBuffer([]byte{})
 	)
 
@@ -224,8 +223,9 @@ func (r *Repo) List(ctx context.Context, req ListEntriesRequest) ([]*Entry, erro
 		return nil, fmt.Errorf("failed to unmarshal search response: %w", err)
 	}
 
-	for _, e := range response.Hits.Hits {
-		entries = append(entries, e.Entry)
+	entries := make([]*Entry, len(response.Hits.Hits))
+	for i, e := range response.Hits.Hits {
+		entries[i] = e.Entry
 	}
 
 	return entries, nil

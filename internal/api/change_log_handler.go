@@ -7,8 +7,9 @@ import (
 	"strconv"
 
 	"github.com/emicklei/go-restful/v3"
-	"github.com/gencon_buddy_api/gcbapi"
 	"github.com/rs/zerolog"
+
+	"github.com/gencon_buddy_api/gcbapi"
 )
 
 // ChangeLogHandler is the API handler for all /api/changelog/* endpoints

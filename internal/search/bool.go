@@ -34,11 +34,9 @@ func (b *Bool) ToQuery() (any, error) {
 		return nil, fmt.Errorf("cannot create a bool query without must, should, or mustNot set")
 	}
 
-	var (
-		mustQueries    []any
-		shouldQueries  []any
-		mustNotQueries []any
-	)
+	mustQueries := make([]any, 0, len(b.must))
+	shouldQueries := make([]any, 0, len(b.should))
+	mustNotQueries := make([]any, 0, len(b.mustNot))
 
 	for _, t := range b.must {
 		query, err := t.ToQuery()

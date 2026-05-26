@@ -3,9 +3,10 @@ package data
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/cmd/data/initialize"
-	"github.com/spf13/cobra"
 )
 
 const (
