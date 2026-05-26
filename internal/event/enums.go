@@ -216,13 +216,12 @@ type Category string
 const (
 	No       Category = "none"
 	Official Category = "Gen Con presents"
-	Premier  Category = "Premier Event"
 )
 
 // ValidateCategory validates the incoming string against the defined enum list
 func ValidateCategory(v string) error {
 	switch Category(v) {
-	case No, Official, Premier:
+	case No, Official:
 		return nil
 	default:
 		return fmt.Errorf("invalid value for Category: %s", v)
@@ -237,8 +236,6 @@ func CategoryFromSearchTerm(s string) Category {
 		return No
 	case "official":
 		return Official
-	case "premier":
-		return Premier
 	default:
 		return Category("invalid")
 	}
