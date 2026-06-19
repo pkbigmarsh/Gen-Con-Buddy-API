@@ -1,5 +1,7 @@
 package bgg
 
+import "fmt"
+
 // BGGGame holds all fields from the BGG CSV for a single game.
 type BGGGame struct {
 	ID             string
@@ -36,10 +38,17 @@ type GenConCombo struct {
 	EventCount   int
 }
 
+// MappingKey generates the expected key for [MappingFile] based on the format
+// "GameSystem|RulesEdition"
+func (g GenConCombo) MappingKey() string {
+	return fmt.Sprintf("%s|%s", g.GameSystem, g.RulesEdition)
+}
+
 // MatchResult is the output of a Match call. BGGID is empty when no match was found.
 type MatchResult struct {
 	BGGID string
 	Name  string
+	Game  *BGGGame
 }
 
 // MappingEntry holds the BGG match for one (GameSystem, RulesEdition) pair.

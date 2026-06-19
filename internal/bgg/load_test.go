@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -86,6 +87,7 @@ func TestLoadCorpus_SplitsBaseAndExpansion(t *testing.T) {
 
 	corpus, err := LoadCorpus(f)
 	require.NoError(t, err)
+	require.NotNil(t, corpus)
 	require.Len(t, corpus.BaseGames, 2)
 	require.Len(t, corpus.Expansions, 1)
 }
@@ -96,6 +98,7 @@ func TestLoadCorpus_ParsesRank(t *testing.T) {
 
 	corpus, err := LoadCorpus(f)
 	require.NoError(t, err)
+	require.NotNil(t, corpus)
 
 	var wingspan *BGGGame
 	for i := range corpus.BaseGames {
@@ -115,13 +118,15 @@ func TestLoadCorpus_ExpansionIsUnranked(t *testing.T) {
 
 	corpus, err := LoadCorpus(f)
 	require.NoError(t, err)
+	require.NotNil(t, corpus)
 	require.Equal(t, 0, corpus.Expansions[0].Rank)
 	require.True(t, corpus.Expansions[0].IsExpansion)
 }
 
 func TestLoadCorpus_FileNotFound(t *testing.T) {
-	_, err := LoadCorpus("/nonexistent/bgg.csv")
+	corpus, err := LoadCorpus("/nonexistent/bgg.csv")
 	require.Error(t, err)
+	require.Nil(t, corpus)
 }
 
 // ---- LoadGenConCombos ----
@@ -195,4 +200,23 @@ func TestLoadGenConCombos_Deduplication(t *testing.T) {
 func TestLoadGenConCombos_FileNotFound(t *testing.T) {
 	_, err := LoadGenConCombos("/nonexistent/gencon.csv")
 	require.Error(t, err)
+}
+
+// ---- LoadCorpusFromReader ----
+
+func TestLoadCorpusFromReader(t *testing.T) {
+	const csvData = `id,name,yearpublished,rank,bayesaverage,average,usersrated,is_expansion,abstracts_rank,cgs_rank,childrensgames_rank,familygames_rank,partygames_rank,strategygames_rank,thematic_rank,wargames_rank
+1,Wingspan,2019,10,8.0,8.2,50000,0,,,,,,,,
+2,Wingspan: European Expansion,2019,0,7.5,7.8,10000,1,,,,,,,,
+`
+
+	corpus, err := LoadCorpusFromReader(strings.NewReader(csvData))
+	require.NoError(t, err)
+	require.Len(t, corpus.BaseGames, 1)
+	require.Len(t, corpus.Expansions, 1)
+	require.Equal(t, "Wingspan", corpus.BaseGames[0].Name)
+	require.Equal(t, 10, corpus.BaseGames[0].Rank)
+	require.InDelta(t, 8.2, corpus.BaseGames[0].Average, 0.001)
+	require.Equal(t, Normalize("Wingspan"), corpus.BaseGames[0].NormalizedName)
+	require.True(t, corpus.Expansions[0].IsExpansion)
 }

@@ -33,6 +33,8 @@ func init() {
 
 	Cmd.AddCommand(initialize.InitCmd)
 	Cmd.AddCommand(UpdateCmd)
+	Cmd.AddCommand(bggCmd)
+	Cmd.AddCommand(fetchBggCmd)
 }
 
 func run(cmd *cobra.Command, args []string) error {

@@ -4,7 +4,7 @@ package bgg
 // best confident result, or an empty MatchResult if nothing clears any stage.
 //
 // TODO(overrides): check overrides map before the cascade.
-func Match(combo GenConCombo, corpus Corpus) MatchResult {
+func Match(combo GenConCombo, corpus *Corpus) MatchResult {
 	query := smartQuery(combo)
 	if r := exactBest(query, corpus.BaseGames); r.BGGID != "" {
 		return r
@@ -65,7 +65,11 @@ func exactBest(query string, candidates []BGGGame) MatchResult {
 		return MatchResult{}
 	}
 
-	return MatchResult{BGGID: best.ID, Name: best.Name}
+	return MatchResult{
+		BGGID: best.ID,
+		Name:  best.Name,
+		Game:  best,
+	}
 }
 
 // betterRank returns true if a is a better pick than b by BGG rank.
