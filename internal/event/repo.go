@@ -214,6 +214,10 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		"sort":             sortEntries,
 	}
 
+	if len(req.SearchAfter) != 0 {
+		searchBody["search_after"] = json.RawMessage(req.SearchAfter)
+	}
+
 	if len(req.Terms) != 0 {
 		var must []any
 		var termErrors []error
@@ -284,10 +288,16 @@ func (r *EventRepo) Search(ctx context.Context, req SearchRequest) (SearchRespon
 		events[i] = e.Event
 	}
 
-	return SearchResponse{
+	searchResponse := SearchResponse{
 		TotalEvents: response.Hits.Total.Value,
 		Events:      events,
-	}, nil
+	}
+
+	if len(req.Sorts) != 0 && len(response.Hits.Hits) != 0 {
+		searchResponse.SearchAfter = response.Hits.Hits[len(response.Hits.Hits)-1].Sort
+	}
+
+	return searchResponse, nil
 }
 
 // KeywordFacet is a single aggregation bucket from OpenSearch.
@@ -455,10 +465,11 @@ type eventSearchResponse struct {
 		} `json:"total"`
 		MaxScore float64 `json:"max_score"`
 		Hits     []struct {
-			Index string  `json:"_index"`
-			ID    string  `json:"_id"`
-			Score float64 `json:"_score"`
-			Event *Event  `json:"_source,omitempty"`
+			Index string          `json:"_index"`
+			ID    string          `json:"_id"`
+			Score float64         `json:"_score"`
+			Event *Event          `json:"_source,omitempty"`
+			Sort  json.RawMessage `json:"sort,omitempty"`
 		} `json:"hits"`
 	} `json:"hits"`
 	Errors bool `json:"errors"`

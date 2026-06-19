@@ -10,15 +10,17 @@ import (
 // SearchRequest contains all the needed information for searching
 // for events
 type SearchRequest struct {
-	Terms []search.Term
-	Page  int
-	Limit int
-	Sorts []SortEntry
+	Terms       []search.Term
+	Page        int
+	Limit       int
+	Sorts       []SortEntry
+	SearchAfter []byte
 }
 
 type SearchResponse struct {
 	TotalEvents int64
 	Events      []*Event
+	SearchAfter []byte
 }
 
 func NewSearchField(f string, value string) (search.Term, error) {

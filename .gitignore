@@ -2,3 +2,13 @@ notes/
 *.env
 bin/
 *.code-workspace
+vendor/
+testdata/bgg_tests/gcb_test
+# Downloaded BGG ranks data dump (large; fetch fresh, never commit)
+boardgames_ranks*.csv
+
+# Ignore Agent artifacts
+docs/superpowers
+
+# Manual full-data verification work dir (binary, fetched data, logs)
+tmp/

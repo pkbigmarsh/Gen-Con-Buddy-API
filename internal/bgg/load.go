@@ -24,30 +24,39 @@ var bggEventTypes = map[string]bool{
 	"NMN": true, // Non-Historical Miniatures
 }
 
-// LoadCorpus reads the BGG CSV and returns all games split into BaseGames and Expansions.
-func LoadCorpus(path string) (Corpus, error) {
+// LoadCorpus opens path and parses the BGG ranks CSV into a Corpus.
+func LoadCorpus(path string) (*Corpus, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return Corpus{}, fmt.Errorf("open bgg csv: %w", err)
+		return nil, fmt.Errorf("open bgg csv: %w", err)
 	}
+
 	defer f.Close()
 
-	r := csv.NewReader(f)
-	headers, err := r.Read()
+	return LoadCorpusFromReader(f)
+}
+
+// LoadCorpusFromReader parses BGG ranks CSV from r into a Corpus, splitting
+// rows into BaseGames and Expansions. Column order is irrelevant; fields are
+// resolved by header name.
+func LoadCorpusFromReader(r io.Reader) (*Corpus, error) {
+	cr := csv.NewReader(r)
+	headers, err := cr.Read()
 	if err != nil {
-		return Corpus{}, fmt.Errorf("read bgg headers: %w", err)
+		return nil, fmt.Errorf("read bgg headers: %w", err)
 	}
+
 	idx := headerIndex(headers)
 
 	var corpus Corpus
 	for {
-		row, err := r.Read()
+		row, err := cr.Read()
 		if err == io.EOF {
 			break
 		}
 
 		if err != nil {
-			return Corpus{}, fmt.Errorf("read bgg row: %w", err)
+			return nil, fmt.Errorf("read bgg row: %w", err)
 		}
 
 		name := csvField(row, idx, "name")
@@ -77,7 +86,8 @@ func LoadCorpus(path string) (Corpus, error) {
 			corpus.BaseGames = append(corpus.BaseGames, g)
 		}
 	}
-	return corpus, nil
+
+	return &corpus, nil
 }
 
 // LoadGenConCombos reads the Gen Con CSV and returns unique (GameSystem, RulesEdition)
