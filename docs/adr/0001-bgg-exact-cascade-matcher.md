@@ -1,5 +1,7 @@
 # BGG matching uses a 3-stage exact cascade with no fuzzy fallback
 
+> **Status:** Superseded in part by [ADR-0002](0002-bgg-mapping-lives-on-the-cron-volume.md) and [ADR-0003](0003-bgg-combos-are-sourced-from-the-event-index.md). The matcher decision below still stands; its combo source and mapping-distribution assumptions (`data match-bgg`, combos from the event CSV, mapping committed to the repo) were changed by PR #53 and no longer describe the system. See those ADRs for the current design.
+
 Gen Con organizers fill in free-text GameSystem and RulesEdition fields with no controlled vocabulary. We evaluated 18 matching strategies — varying string comparison method (exact, Levenshtein, Jaccard token-set), query construction (system alone vs. system+edition vs. "smart" edition detection), and tiebreak heuristic — against 865 unique combos and 100+ hand-labeled ground-truth rows. The result was clear: a precision/coverage tradeoff where returning no result is strictly better than returning a wrong one.
 
 We chose a 3-stage exact cascade (`internal/bgg/match.go`):

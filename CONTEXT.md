@@ -43,7 +43,7 @@ The original ticket count snapshotted from `TicketsAvailable` at the time of the
 ### Data pipeline
 
 **ChangeLog**:
-A batch record of Events created, updated, or deleted in a single data pull from Gen Con. Pulls are scheduled externally in Railway every 6 hours (`0 */6 * * *`). Each ChangeLog entry is the authoritative record of what changed and when.
+A batch record of Events created, updated, or deleted in a single data pull from Gen Con. Pulls are scheduled externally in Railway every 6 hours (`0 */6 * * *`). Each fire runs two phases: `data update` re-ingests the catalog (hydrating BGG data from the previous run's mapping), then `data bgg` regenerates that mapping — but only when it is more than 20 hours old, so BGG data refreshes roughly once a day. Each ChangeLog entry is the authoritative record of what changed and when. See [ADR-0002](docs/adr/0002-bgg-mapping-lives-on-the-cron-volume.md) for the cron's two-phase design.
 
 **Soft-deleted Event**:
 An Event that no longer appears in Gen Con's source data. The `deleted` flag is set to `true` in OpenSearch but the document is not removed — it stays in the index so ChangeLog entries can reference it. The search API excludes soft-deleted Events from all results by default.
@@ -51,12 +51,15 @@ An Event that no longer appears in Gen Con's source data. The `deleted` flag is 
 **BGG (BoardGameGeek)**:
 An external data source used to enrich Events with community rank and average rating. Matched to Events via the `GameSystem` + `RulesEdition` pair.
 
+**BGG Mapping**:
+The generated lookup from a `GameSystem`|`RulesEdition` combo to a matched BGG game (id, rank, average rating). Produced by `data bgg`, which scans the indexed Events for combos and matches each against the BGG corpus, and consumed by `data init` / `data update` via `--bgg-mapping` to hydrate `bggId` onto Events. It is regenerated state, not source: it is not committed to the repo and lives on the cron service's persistent volume. See [ADR-0001](docs/adr/0001-bgg-exact-cascade-matcher.md) for how matches are made, [ADR-0002](docs/adr/0002-bgg-mapping-lives-on-the-cron-volume.md) for where it lives, and [ADR-0003](docs/adr/0003-bgg-combos-are-sourced-from-the-event-index.md) for why combos come from the index.
+
 ## Relationships
 
 - An **Event** has exactly one **EventType**
 - An **Event** is hosted by one **Group**
 - A **ChangeLog** entry references disjoint sets of created, updated, and deleted **Events**
-- **BGG** data is optionally attached to an **Event** via `GameSystem` + `RulesEdition` matching
+- **BGG** data is optionally attached to an **Event** via `GameSystem` + `RulesEdition` matching, carried by the **BGG Mapping**. Enrichment lags one pull cycle for combos the index has not seen before: a brand-new `GameSystem` + `RulesEdition` pairing must be indexed before `data bgg` can match it, so it gains its `bggId` on the following run.
 
 ## Example dialogue
 

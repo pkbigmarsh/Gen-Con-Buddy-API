@@ -138,6 +138,49 @@ func loadBGGMapping(cmd *cobra.Command, logger zerolog.Logger) map[string]bgg.Ma
 	return mapping
 }
 
+// changeLogEventLimit caps how many event IDs a single change log entry records
+// before the OpenSearch (Bonsai) document is rejected for size. See
+// trimChangeLogEntry for the retention order and the accepted data loss.
+const changeLogEventLimit = 10000
+
+// trimChangeLogEntry caps the total number of event IDs recorded on entry at
+// limit, keeping created events first, then deleted, then updated. Call it after
+// all three slices are populated (i.e. after deletions are computed), otherwise
+// DeletedEvents is still empty and escapes the cap.
+//
+// This is deliberate, accepted data loss: when a change log lists more than the
+// limit of event IDs, the OpenSearch (Bonsai) document exceeds our current doc
+// size and the write is rejected outright. We would rather record a truncated
+// change log than lose the whole entry, so the overflow IDs are dropped from the
+// record. The underlying event writes (creates, updates, soft-deletes) have
+// already happened against the index and are unaffected — only the change log's
+// record of them is incomplete.
+//
+// The 10k limit is arbitrary. Large runs are made worse by the BGG rating drift
+// in issue #56, which flags thousands of otherwise-unchanged events as updated
+// and inflates the change log every time the mapping refreshes.
+//
+// TODO: this is a temporary fix until we move change log data to a relational
+// database, where the entry is not bound by a single document's size.
+func trimChangeLogEntry(entry *changelog.Entry, limit int) {
+	if len(entry.CreatedEvents) >= limit {
+		entry.CreatedEvents = entry.CreatedEvents[:limit]
+		entry.DeletedEvents = []string{}
+		entry.UpdatedEvents = []string{}
+		return
+	}
+
+	if len(entry.CreatedEvents)+len(entry.DeletedEvents) >= limit {
+		entry.DeletedEvents = entry.DeletedEvents[:limit-len(entry.CreatedEvents)]
+		entry.UpdatedEvents = []string{}
+		return
+	}
+
+	if len(entry.CreatedEvents)+len(entry.DeletedEvents)+len(entry.UpdatedEvents) > limit {
+		entry.UpdatedEvents = entry.UpdatedEvents[:limit-len(entry.CreatedEvents)-len(entry.DeletedEvents)]
+	}
+}
+
 func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*event.Event) error {
 	clEntry := changelog.NewEntry()
 
@@ -192,6 +235,11 @@ func processChangeLogEvents(ctx context.Context, gcb *app.App, eventList []*even
 			Str("change_log_entry_id", clEntry.ID).
 			Msg("failed to mark deleted events as deleted")
 	}
+
+	// Cap the recorded event IDs so the change log document stays under the
+	// OpenSearch (Bonsai) size limit. Must run after processChangeLogDeletions,
+	// which is what populates clEntry.DeletedEvents.
+	trimChangeLogEntry(clEntry, changeLogEventLimit)
 
 	if len(clEntry.CreatedEvents) == 0 && len(clEntry.UpdatedEvents) == 0 && len(clEntry.DeletedEvents) == 0 {
 		gcb.Logger.Info().
