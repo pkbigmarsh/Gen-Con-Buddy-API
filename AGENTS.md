@@ -55,6 +55,7 @@ goimports -w -local github.com/gencon_buddy_api .
 ## Go patterns
 
 - **Table-driven tests.** Use a `tests := []struct{...}` table; avoid repetitive individual test functions.
+- **Assert with `testify/require`.** Use `require.Equal`, `require.NoError`, `require.Len`, etc. rather than hand-rolled `if got != want { t.Errorf(...) }` blocks. `require` is already the house style across the test suite.
 - **Pre-allocate slices when length is known.** Use `make([]T, len(source))` and assign by index (`s[i] = ...`). Only use `append` when the final length is not known in advance.
 - **No anonymous structs.** If a struct is used more than once or belongs to an exported API, declare and export it — don't inline `struct{...}` at the call site.
 
