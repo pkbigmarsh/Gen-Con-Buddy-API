@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -11,6 +12,7 @@ import (
 	"github.com/gencon_buddy_api/cmd/app"
 	"github.com/gencon_buddy_api/internal/bgg"
 	"github.com/gencon_buddy_api/internal/event"
+	"github.com/gencon_buddy_api/internal/search"
 )
 
 const (
@@ -153,6 +155,8 @@ func generateBggMapping(gcb *app.App, corpus *bgg.Corpus) (bgg.MappingFile, erro
 		Mappings:    make(map[string]bgg.MappingEntry),
 	}
 
+	// BGG comparison and matching currently requires the game system or rules edition
+	// to perform a match. We can search with that in mind and reduce processing.
 	scanSearchRequest := event.SearchRequest{
 		Page:  0,
 		Limit: gcb.BatchSize,
@@ -167,6 +171,12 @@ func generateBggMapping(gcb *app.App, corpus *bgg.Corpus) (bgg.MappingFile, erro
 			},
 		},
 		SearchAfter: nil,
+		Terms: []search.Term{
+			search.NewBool().Should(
+				search.NewExists(string(event.GameSystem)),
+				search.NewExists(string(event.RulesEdition)),
+			),
+		},
 	}
 
 	type comboKey struct{ system, edition string }
@@ -191,6 +201,14 @@ func generateBggMapping(gcb *app.App, corpus *bgg.Corpus) (bgg.MappingFile, erro
 			key := comboKey{
 				system:  e.GameSystem,
 				edition: e.RulesEdition,
+			}
+
+			if strings.TrimSpace(e.GameSystem) == "" || strings.TrimSpace(e.RulesEdition) == "" {
+				gcb.Logger.Warn().
+					Str("id", e.BggID).
+					Str("game_system", e.GameSystem).
+					Str("rules_edition", e.RulesEdition).
+					Msg("empty game system or rules edition.")
 			}
 
 			if titleCounts[key] == nil {

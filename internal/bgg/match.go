@@ -6,6 +6,12 @@ package bgg
 // TODO(overrides): check overrides map before the cascade.
 func Match(combo GenConCombo, corpus *Corpus) MatchResult {
 	query := smartQuery(combo)
+
+	// if the query value is normalized to empty, match nothing
+	if query == "" {
+		return MatchResult{}
+	}
+
 	if r := exactBest(query, corpus.BaseGames); r.BGGID != "" {
 		return r
 	}

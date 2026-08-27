@@ -22,6 +22,7 @@ func TestNormalize(t *testing.T) {
 		{"Yucatán", "yucatan"},
 		{"Ahau: Rulers of Yucatán", "ahau rulers of yucatan"},
 		{"Aerodrome", "aerodrome"}, // no diacritics, unchanged
+		{"¥€$", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
