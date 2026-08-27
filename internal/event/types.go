@@ -31,14 +31,16 @@ var (
 )
 
 type Event struct {
-	GameID                   string       `json:"gameId"`
-	Group                    string       `json:"group"`
-	Title                    string       `json:"title"`
-	ShortDescription         string       `json:"shortDescription"`
-	LongDescription          string       `json:"longDescription"`
-	EventType                Type         `json:"eventType"`
-	GameSystem               string       `json:"gameSystem"`
-	RulesEdition             string       `json:"rulesEdition"`
+	GameID           string `json:"gameId"`
+	Group            string `json:"group"`
+	Title            string `json:"title"`
+	ShortDescription string `json:"shortDescription"`
+	LongDescription  string `json:"longDescription"`
+	EventType        Type   `json:"eventType"`
+	// GameSystem and RulesEdition set to omit empty so we can leverage missing fields
+	// when searching for possible BoardGameGeek matches.
+	GameSystem               string       `json:"gameSystem,omitempty"`
+	RulesEdition             string       `json:"rulesEdition,omitempty"`
 	MinPlayers               int64        `json:"minPlayers"`
 	MaxPlayers               int64        `json:"maxPlayers"`
 	AgeRequired              AgeGroup     `json:"ageRequired"`

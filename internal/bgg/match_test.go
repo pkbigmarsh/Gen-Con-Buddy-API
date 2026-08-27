@@ -19,6 +19,8 @@ var (
 			{ID: "6b", Name: "Axis & Allies!", Rank: 200, UsersRated: 20000},
 			{ID: "7", Name: "SHŌBU", Rank: 50, UsersRated: 3000},
 			{ID: "8", Name: "Orléans", Rank: 30, UsersRated: 15000},
+			// Empty string catch
+			{ID: "9", Name: "", Rank: 11, UsersRated: 1},
 		},
 		Expansions: []BGGGame{
 			{ID: "2", Name: "Wingspan: European Expansion", Rank: 0, UsersRated: 10000},
@@ -125,6 +127,14 @@ func TestMatch(t *testing.T) {
 			corpus:      testCorpus,
 			wantNoMatch: true,
 		},
+		{
+			name: "Empty string should have no match",
+			combo: GenConCombo{
+				GameSystem: "¥€$",
+			},
+			corpus:      testCorpus,
+			wantNoMatch: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -140,6 +150,45 @@ func TestMatch(t *testing.T) {
 					require.Equal(t, *tt.wantGame, *result.Game)
 				}
 			}
+		})
+	}
+}
+
+func TestSmartQuery(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		given GenConCombo
+		want  string
+	}{
+		{
+			name: "diacritics are dropped",
+			given: GenConCombo{
+				GameSystem: "SHŌBU",
+			},
+			want: "shobu",
+		},
+		{
+			name: "non supported characters from the game system are dropped",
+			given: GenConCombo{
+				GameSystem: "¥€$",
+			},
+			want: "",
+		},
+		{
+			name: "non supported characters from the game edition should also be dropped",
+			given: GenConCombo{
+				GameSystem:   "¥€$",
+				RulesEdition: "¥€$",
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := smartQuery(tt.given)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
