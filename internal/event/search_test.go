@@ -222,9 +222,9 @@ func TestNewSearchField_MultiValue(t *testing.T) {
 		{
 			name:  "specialCategory multi value",
 			field: "specialCategory",
-			value: "official,premier",
+			value: "none,official",
 			wantQuery: map[string]any{
-				"terms": map[string]any{"specialCategory": []string{"Gen Con presents", "Premier Event"}},
+				"terms": map[string]any{"specialCategory": []string{"none", "Gen Con presents"}},
 			},
 		},
 	}
